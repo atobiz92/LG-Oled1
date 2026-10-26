@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Die Siedelei</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="start" class="overlay">
+    <div class="start-box">
+      <h1>Die Siedelei</h1>
+      <p class="sub">Ein Aufbauspiel im Geiste der alten Siedler-Klassiker – mit Holz, Brot, Bärten und Amazonen.</p>
+      <h2>Wähle dein Volk</h2>
+      <div id="factions" class="factions"></div>
+      <div class="opts">
+        <label>Gegner
+          <select id="gegner">
+            <option value="zufall">Zufall</option>
+          </select>
+        </label>
+        <label>Kartennummer <input id="seed" type="number" min="1" max="99999"></label>
+      </div>
+      <button id="los" class="big">Los geht's!</button>
+      <details class="help">
+        <summary>Steuerung &amp; Tipps</summary>
+        <ul>
+          <li><b>Karte verschieben:</b> Ziehen mit Maus/Finger, oder WASD / Pfeiltasten</li>
+          <li><b>Zoomen:</b> Mausrad oder zwei Finger</li>
+          <li><b>Bauen:</b> Gebäude links wählen, dann auf einen weißen Punkt klicken. Rechtsklick/Esc bricht ab.</li>
+          <li><b>Figuren anklicken:</b> Die haben was zu sagen.</li>
+          <li><b>Angreifen:</b> Feindlichen Turm anklicken → „Angreifen“.</li>
+          <li><b>Tempo:</b> Leertaste = Pause, Tasten 1–3 = Geschwindigkeit</li>
+          <li><b>Wirtschaft:</b> Holzfäller → Sägewerk liefert Bretter. Steinmetz liefert Steine. Minen brauchen Brot oder Fisch. Kaserne + Waffen = Soldaten. Türme bringen Land.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <main id="spiel" hidden>
+    <canvas id="view"></canvas>
+    <header id="topbar">
+      <span id="volk"></span>
+      <span id="leute"></span>
+      <span id="uhr"></span>
+      <span class="grow"></span>
+      <button data-speed="0" title="Pause (Leertaste)">⏸</button>
+      <button data-speed="1" class="on" title="Normal (1)">1×</button>
+      <button data-speed="2" title="Schnell (2)">2×</button>
+      <button data-speed="4" title="Sehr schnell (3)">4×</button>
+      <button id="t-musik" class="on" title="Musik">🎵</button>
+      <button id="t-sprache" class="on" title="Sprachausgabe">🗣️</button>
+      <button id="t-sfx" class="on" title="Geräusche">🔊</button>
+      <button id="t-panel" title="Menü ein/aus">☰</button>
+    </header>
+    <aside id="panel">
+      <nav class="tabs">
+        <button data-tab="bauen" class="on">Bauen</button>
+        <button data-tab="lager">Lager</button>
+      </nav>
+      <div id="tab-bauen" class="tab"></div>
+      <div id="tab-lager" class="tab" hidden></div>
+    </aside>
+    <div id="info" hidden></div>
+    <canvas id="mini" width="160" height="160"></canvas>
+    <div id="untertitel"></div>
+  </main>
+
+  <section id="ende" class="overlay" hidden>
+    <div class="start-box">
+      <h1 id="ende-titel"></h1>
+      <p id="ende-text"></p>
+      <button id="nochmal" class="big">Nochmal!</button>
+    </div>
+  </section>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

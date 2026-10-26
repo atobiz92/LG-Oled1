@@ -1,0 +1,201 @@
+:root {
+  --holz: #5b3a1e;
+  --holz-hell: #8b5a2b;
+  --pergament: #f4e8c8;
+  --pergament-dunkel: #e2d0a2;
+  --tinte: #2b1d0e;
+  --akzent: #c0392b;
+  --ok: #2e7d32;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #1d2a1d;
+  color: var(--tinte);
+  font-family: Georgia, 'Times New Roman', serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 2px solid var(--holz);
+  background: var(--pergament-dunkel);
+  color: var(--tinte);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+button:hover { background: #fff3cf; }
+button.on { background: var(--holz-hell); color: #fff; }
+button.big { font-size: 1.3rem; padding: 10px 28px; background: var(--akzent); color: #fff; border-color: #7b1f16; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 30%, #4a6b34, #1d2a1d 75%);
+  z-index: 50;
+  padding: 16px;
+  overflow: auto;
+}
+.overlay[hidden] { display: none; }
+.start-box {
+  background: var(--pergament);
+  border: 4px solid var(--holz);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  padding: 20px 24px;
+  max-width: 900px;
+  width: 100%;
+  text-align: center;
+  max-height: 100%;
+  overflow: auto;
+}
+h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); color: var(--holz); letter-spacing: 1px; }
+h2 { margin: 18px 0 8px; font-size: 1.2rem; }
+.sub { margin: 4px 0 0; font-style: italic; }
+
+.factions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.faction {
+  border: 3px solid var(--pergament-dunkel);
+  border-radius: 10px;
+  padding: 10px;
+  background: #fffaf0;
+  cursor: pointer;
+  text-align: left;
+}
+.faction.on { border-color: var(--akzent); box-shadow: 0 0 0 2px var(--akzent) inset; }
+.faction h3 { margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.faction .swatch { width: 18px; height: 18px; border-radius: 4px; border: 2px solid rgba(0,0,0,0.4); }
+.faction p { margin: 4px 0; font-size: 0.9rem; }
+.faction .bonus { font-size: 0.8rem; color: var(--ok); font-weight: bold; }
+.faction button { font-size: 0.8rem; margin-top: 4px; }
+
+.opts { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+.opts input, .opts select { font: inherit; margin-left: 6px; width: 120px; }
+.help { text-align: left; margin-top: 16px; font-size: 0.9rem; }
+.help summary { cursor: pointer; font-weight: bold; }
+
+#spiel { position: fixed; inset: 0; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+#topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: linear-gradient(var(--holz), #3e2712);
+  color: var(--pergament);
+  border-bottom: 3px solid #2b1a0a;
+  font-size: 0.95rem;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+#topbar button { padding: 2px 8px; font-size: 0.9rem; }
+#topbar button.on { background: #fff3cf; color: var(--tinte); border-color: #ffd27f; box-shadow: 0 0 0 2px #ffd27f; }
+#topbar #t-musik:not(.on), #topbar #t-sprache:not(.on), #topbar #t-sfx:not(.on) { opacity: 0.45; text-decoration: line-through; }
+#topbar .grow { flex: 1; }
+#volk { font-weight: bold; }
+
+#panel {
+  position: absolute;
+  top: 48px; left: 8px;
+  width: 230px;
+  max-height: calc(100% - 230px);
+  overflow: auto;
+  background: var(--pergament);
+  border: 3px solid var(--holz);
+  border-radius: 10px;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+#panel.zu { display: none; }
+.tabs { display: flex; }
+.tabs button { flex: 1; border-radius: 0; border-width: 0 0 2px 0; }
+.tab { padding: 6px; }
+.gruppe { font-weight: bold; margin: 8px 2px 4px; font-size: 0.85rem; text-transform: uppercase; color: var(--holz); }
+.bau {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+  text-align: left;
+  padding: 4px 6px;
+}
+.bau .ico { font-size: 1.3rem; width: 26px; text-align: center; }
+.bau .name { flex: 1; font-size: 0.9rem; }
+.bau .kosten { font-size: 0.75rem; white-space: nowrap; }
+.bau.zuteuer .kosten { color: var(--akzent); }
+.ware { display: flex; justify-content: space-between; padding: 2px 4px; border-bottom: 1px dotted var(--pergament-dunkel); }
+.ware b { font-variant-numeric: tabular-nums; }
+
+#info {
+  position: absolute;
+  right: 8px; top: 48px;
+  width: 250px;
+  background: var(--pergament);
+  border: 3px solid var(--holz);
+  border-radius: 10px;
+  padding: 10px;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  font-size: 0.9rem;
+}
+#info h3 { margin: 0 0 4px; }
+#info .zeile { margin: 3px 0; }
+#info .knoepfe { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+#info .knoepfe button.gefahr { background: var(--akzent); color: #fff; }
+
+#mini {
+  position: absolute;
+  right: 8px; bottom: 8px;
+  width: 160px; height: 160px;
+  border: 3px solid var(--holz);
+  border-radius: 6px;
+  z-index: 10;
+  background: #000;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+#untertitel {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  max-width: min(640px, calc(100% - 200px));
+  z-index: 11;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.zeile-ut {
+  background: rgba(20, 12, 4, 0.82);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border-left: 5px solid var(--akzent);
+  font-size: 0.95rem;
+  animation: rein 0.3s ease-out;
+}
+.zeile-ut b { color: #ffd27f; }
+@keyframes rein { from { opacity: 0; transform: translateY(8px); } }
+
+@media (max-width: 700px) {
+  #panel { top: auto; bottom: 8px; left: 8px; width: calc(100% - 184px); max-height: 40%; }
+  #info { top: auto; bottom: calc(40% + 16px); right: 8px; width: calc(100% - 16px); max-width: 320px; }
+  #mini { width: 120px; height: 120px; }
+  #untertitel { bottom: auto; top: 90px; max-width: calc(100% - 32px); }
+  #topbar { font-size: 0.8rem; }
+}
