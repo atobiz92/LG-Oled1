@@ -50,6 +50,10 @@
 
     function send(type, uri, payload, ms) {
         return new Promise(function (resolve, reject) {
+            if (!ws || ws.readyState !== 1) {
+                reject(new Error('Verbindung zum TV getrennt'));
+                return;
+            }
             var id = 'l' + (++seq);
             waiting[id] = {
                 resolve: resolve,
@@ -101,9 +105,12 @@
                 DevLog.log('SSAP: connection allowed on the TV');
             }
         }, function (err) {
-            // A "No" on the TV, or a key the TV no longer knows.
-            if (/reject|denied|cancel/i.test(err.message)) save({ declined: Date.now() });
-            else if (s.key) save({});
+            // Only an answer from the TV changes what is stored: a "No", or a key it no longer
+            // knows. A dropped connection or a timeout keeps the key for the next start.
+            if (err.ssap !== undefined) {
+                if (/reject|denied|cancel/i.test(err.message)) save({ declined: Date.now() });
+                else if (s.key) save({});
+            }
             throw err;
         });
     }
@@ -116,24 +123,32 @@
         }
         if (typeof window.WebSocket !== 'function') return Promise.reject(new Error('Kein WebSocket'));
         ready = new Promise(function (resolve, reject) {
+            var sock;
             var timer = setTimeout(function () { reject(new Error('LG Connect Apps nicht erreichbar')); }, OPEN_MS);
             try {
-                ws = new WebSocket(URL);
+                sock = ws = new WebSocket(URL);
             } catch (e) {
                 clearTimeout(timer);
                 reject(e);
                 return;
             }
-            ws.onopen = function () {
+            // Handlers of an earlier, already given-up socket must not touch the current one.
+            sock.onopen = function () {
+                if (ws !== sock) return;
                 clearTimeout(timer);
                 register().then(resolve, reject);
             };
-            ws.onmessage = onMessage;
-            ws.onerror = function () {
+            sock.onmessage = function (ev) {
+                if (ws === sock) onMessage(ev);
+            };
+            sock.onerror = function () {
+                if (ws !== sock) return;
                 clearTimeout(timer);
                 reject(new Error('LG Connect Apps nicht erreichbar'));
             };
-            ws.onclose = function () { fail(new Error('Verbindung zum TV getrennt')); };
+            sock.onclose = function () {
+                if (ws === sock) fail(new Error('Verbindung zum TV getrennt'));
+            };
         });
         ready.catch(function (err) {
             DevLog.log('SSAP unavailable: ' + DevLog.errorText(err));

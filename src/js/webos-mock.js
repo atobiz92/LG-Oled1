@@ -21,7 +21,7 @@
  */
 (function () {
     'use strict';
-    if (typeof window.PalmServiceBridge === 'function') return;
+    if (window.PalmServiceBridge) return;     // on the TV: nothing to simulate
     // Kept under the kit's name: boot.js and homeassistant.js ask for it to know they run in the preview.
     window.__TIZEN_MOCK__ = true;
     window.__WEBOS_MOCK__ = true;
@@ -160,6 +160,7 @@
         var self = this;
         setTimeout(function () {
             if (WebOSMock.ssap === 'off') { if (self.onerror) self.onerror({}); return; }
+            self.readyState = 1;
             if (self.onopen) self.onopen({});
         }, 30);
     }
@@ -184,7 +185,7 @@
         else res = { returnValue: false, errorText: 'Unknown method' };
         reply({ type: 'response', id: msg.id, payload: res });
     };
-    FakeSsap.prototype.close = function () {};
+    FakeSsap.prototype.close = function () { this.readyState = 3; };
     window.WebSocket = FakeSsap;
 
     // Re-send subscribed answers, e.g. after WebOSMock.network changed: WebOSMock.notify().

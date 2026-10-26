@@ -69,3 +69,15 @@ Entfernt, weil nur für Samsung: `native/`, `src/config.xml`, `scripts/install-t
 - 0.9.7 zeigte auf dem TV zu wenige Apps, vermutlich weil LG die App-Liste über Luna verweigert. Ab 0.9.8 prüfen, ob die Abfrage über LG Connect Apps alle installierten Apps liefert (Protokoll: „App list“, „SSAP“).
 - Tastencodes (Zurück 461, Farbtasten, Halten von OK und Zurück).
 - Fotos der 16 Ansichten am TV und Vergleich mit den Referenzbildern.
+
+## 7. Zweite Prüfung (26.10.2026, 0.9.8, holt 0.9.7 nach)
+
+Behoben vor der Installation:
+- Die Listen-Messung ohne Grid hat sich über ihre eigenen Messmarken immer wieder selbst angestoßen. Das bedeutete Dauerlast auf der Startseite.
+- LG Connect Apps: Ein Verbindungsabbruch hat den gespeicherten Schlüssel gelöscht, und ein alter Socket konnte die neue Verbindung beenden.
+- Simulator und Plattformerkennung prüfen `PalmServiceBridge` jetzt auch dann richtig, wenn die Engine es als Objekt meldet.
+- Build-Skript: Gerätename in Anführungszeichen, Hinweis bei fehlender webOS-CLI, Node ab 20.11.
+
+Offen (später):
+- Beim ersten Start wartet die App-Liste bis zu 60 s auf die Antwort am TV, ohne Hinweis im Launcher.
+- Nach einem „Nein“ am TV gibt es in der Oberfläche keinen Weg, sofort neu zu fragen. Der Launcher fragt nach 24 h erneut.

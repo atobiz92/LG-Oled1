@@ -35,7 +35,8 @@
     var pending = [];
 
     function bridgeCtor() {
-        return typeof window.PalmServiceBridge === 'function' ? window.PalmServiceBridge : null;
+        // Not typeof === 'function': a host constructor may report 'object'.
+        return window.PalmServiceBridge || null;
     }
 
     /*
@@ -150,18 +151,22 @@
         var root = document.documentElement;
         if (!root.classList.contains('no-grid') || !window.MutationObserver) return;
         var queued = false;
+        var observer = null;
         function run() {
             queued = false;
             var boxes = document.querySelectorAll(LISTS);
             for (var i = 0; i < boxes.length; i++) fitList(boxes[i]);
+            // The measuring markers are added and removed above: drop those records, or every
+            // measurement would schedule the next one.
+            observer.takeRecords();
         }
-        function queue(records) {
-            // Our own style changes do not count.
+        function queue() {
             if (queued) return;
             queued = true;
             requestAnimationFrame(run);
         }
-        new MutationObserver(queue).observe(document.body, {
+        observer = new MutationObserver(queue);
+        observer.observe(document.body, {
             childList: true, subtree: true, attributes: true, attributeFilter: ['class']
         });
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { queue(); });

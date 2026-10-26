@@ -27,7 +27,10 @@ function run(cmd, args) {
     // Through the shell so that Windows finds ares-*.cmd; one command string (paths are quoted below),
     // since Node 24 warns about separate arguments with shell: true (DEP0190).
     const r = spawnSync([cmd].concat(args).join(' '), { stdio: 'inherit', shell: true });
-    if (r.status !== 0) process.exit(r.status || 1);
+    if (r.status !== 0) {
+        console.error(cmd + ' failed. Is the webOS CLI installed and on PATH? (npm install -g @webos-tools/cli)');
+        process.exit(r.status || 1);
+    }
 }
 
 function quote(p) {
@@ -58,11 +61,11 @@ function pack() {
 // Always from a fresh build, so an old .ipk of the same version never ends up on the TV.
 function install() {
     pack();
-    run('ares-install', ['--device', device, quote(ipk)]);
+    run('ares-install', ['--device', quote(device), quote(ipk)]);
 }
 
 function launch() {
-    run('ares-launch', ['--device', device, app.id]);
+    run('ares-launch', ['--device', quote(device), app.id]);
 }
 
 const steps = { package: pack, install, launch };
