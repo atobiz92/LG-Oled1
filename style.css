@@ -92,7 +92,7 @@ h2 { margin: 18px 0 8px; font-size: 1.2rem; }
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: max(6px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) 6px max(10px, env(safe-area-inset-left, 0px));
   background: linear-gradient(var(--holz), #3e2712);
   color: var(--pergament);
   border-bottom: 3px solid #2b1a0a;
@@ -108,7 +108,7 @@ h2 { margin: 18px 0 8px; font-size: 1.2rem; }
 
 #panel {
   position: absolute;
-  top: 48px; left: 8px;
+  top: calc(48px + env(safe-area-inset-top, 0px)); left: calc(8px + env(safe-area-inset-left, 0px));
   width: 230px;
   max-height: calc(100% - 230px);
   overflow: auto;
@@ -141,7 +141,7 @@ h2 { margin: 18px 0 8px; font-size: 1.2rem; }
 
 #info {
   position: absolute;
-  right: 8px; top: 48px;
+  right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(48px + env(safe-area-inset-top, 0px));
   width: 250px;
   background: var(--pergament);
   border: 3px solid var(--holz);
@@ -158,7 +158,7 @@ h2 { margin: 18px 0 8px; font-size: 1.2rem; }
 
 #mini {
   position: absolute;
-  right: 8px; bottom: 8px;
+  right: calc(8px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px));
   width: 160px; height: 160px;
   border: 3px solid var(--holz);
   border-radius: 6px;
@@ -193,7 +193,7 @@ h2 { margin: 18px 0 8px; font-size: 1.2rem; }
 @keyframes rein { from { opacity: 0; transform: translateY(8px); } }
 
 @media (max-width: 700px) {
-  #panel { top: auto; bottom: 8px; left: 8px; width: calc(100% - 184px); max-height: 40%; }
+  #panel { top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: calc(8px + env(safe-area-inset-left, 0px)); width: calc(100% - 184px); max-height: 40%; }
   #info { top: auto; bottom: calc(40% + 16px); right: 8px; width: calc(100% - 16px); max-width: 320px; }
   #mini { width: 120px; height: 120px; }
   #untertitel { bottom: auto; top: 90px; max-width: calc(100% - 32px); }
