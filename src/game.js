@@ -3,6 +3,7 @@
 import {
   BUILDINGS, FACTIONS, OBJ, TERRAIN, PLAYER_COLORS, START_LAGER, START_TRAEGER,
   START_SOLDATEN, BAUM_WACHSTUM, FELD_WACHSTUM, MAX_AUSGANG, EINGANG_ZIEL, MAP_W, MAP_H,
+  SPELLS, MANA_MAX,
 } from './config.js';
 import { generateMap } from './map.js';
 import { findPath } from './path.js';
@@ -46,6 +47,7 @@ export class Game {
       defeated: false,
       hq: null,
       produced: {},
+      mana: 0,
     }));
 
     for (const p of this.players) {
@@ -455,11 +457,21 @@ export class Game {
     }
   }
 
+  // Wie in Siedler 3: Der Träger holt sich im Hauptquartier sein Werkzeug und wird zum Handwerker.
   sendWorker(u, b) {
     b.workerComing = true;
-    u.kind = 'arbeiter';
-    u.job = b.type;
+    const hq = this.storage(u.player);
     this.setPlan(u, [
+      { type: 'move', x: hq.x, y: hq.y + 1 },
+      { type: 'wait', t: 1.2, action: 'verwandeln' },
+      {
+        type: 'do',
+        fn: (unit) => {
+          unit.kind = 'arbeiter';
+          unit.job = b.type;
+          this.emit('verwandlung', { player: unit.player, x: unit.x - 0.5, y: unit.y - 0.5, job: b.type });
+        },
+      },
       { type: 'move', x: b.x, y: b.y },
       {
         type: 'do',
@@ -638,7 +650,10 @@ export class Game {
             if (def.target === OBJ.FELS) {
               m.objAmount[j]--;
               if (m.objAmount[j] <= 0) m.obj[j] = OBJ.NONE;
-            } else m.obj[j] = OBJ.NONE;
+            } else {
+              m.obj[j] = OBJ.NONE;
+              this.emit('baum_gefaellt', { player: b.player, x: j % m.w, y: (j / m.w) | 0 });
+            }
             return true;
           },
         });
@@ -719,7 +734,7 @@ export class Game {
         return;
       }
       case 'verarbeiten': {
-        if (full) return;
+        if (full || (def.mana && this.players[b.player].mana >= MANA_MAX)) return;
         const use = this.takeInputs(b);
         if (!use) return;
         b.busy = def.workTime / FACTIONS[this.players[b.player].faction].bonus.work;
@@ -772,6 +787,12 @@ export class Game {
       const s = this.spawnUnit(b.player, 'soldat', b.x, b.y);
       this.emit('soldat_neu', { player: b.player, x: b.x, y: b.y });
       this.stationSoldier(s);
+      return;
+    }
+    if (def.mana) {
+      const p = this.players[b.player];
+      p.mana = Math.min(MANA_MAX, p.mana + def.mana);
+      this.emit('mana', { player: b.player, x: b.x, y: b.y });
       return;
     }
     b.out[def.out] = (b.out[def.out] || 0) + 1;
@@ -938,11 +959,11 @@ export class Game {
           if (this.rng() < atk / (atk + dfn)) {
             target.garrison.shift();
             this.units.delete(defender.id);
-            this.emit('gefallen', { player: target.player, x: target.x, y: target.y });
+            this.emit('gefallen', { player: target.player, x: unit.x - 0.2, y: unit.y - 0.5, dir: -unit.dir });
             this.fight(unit, target);
           } else {
             this.units.delete(unit.id);
-            this.emit('gefallen', { player: unit.player, x: unit.x, y: unit.y });
+            this.emit('gefallen', { player: unit.player, x: unit.x - 0.5, y: unit.y - 0.5, dir: unit.dir });
           }
         },
       },
@@ -975,6 +996,84 @@ export class Game {
       this.winner = rest[0].id;
       this.emit('spielende', { winner: this.winner });
     }
+  }
+
+  // ---------------------------------------------------------------- Zauber
+
+  hasTemple(player) {
+    for (const b of this.buildings.values()) {
+      if (b.player === player && b.type === 'tempel' && b.state === 'aktiv') return true;
+    }
+    return false;
+  }
+
+  // Wirkt einen Zauber um (x, y). Liefert die Zahl der verwandelten Dinge, 0 = nichts passiert (kein Mana verbraucht).
+  castSpell(player, key, x, y) {
+    const spell = SPELLS[key];
+    const p = this.players[player];
+    if (!spell || p.defeated || p.mana < spell.cost || !this.hasTemple(player)) return 0;
+    const m = this.map;
+    const r = spell.radius;
+    let count = 0;
+    const tiles = [];
+    for (let ty = y - r; ty <= y + r; ty++) {
+      for (let tx = x - r; tx <= x + r; tx++) {
+        if (m.inside(tx, ty) && Math.hypot(tx - x, ty - y) <= r + 0.3) tiles.push(m.idx(tx, ty));
+      }
+    }
+    if (key === 'wald') {
+      for (const i of tiles) {
+        if (m.obj[i] === OBJ.FELS) {
+          m.obj[i] = OBJ.BAUM;
+          m.objAmount[i] = 0;
+          count++;
+        }
+      }
+    } else if (key === 'stein') {
+      for (const i of tiles) {
+        if (m.obj[i] === OBJ.BAUM || m.obj[i] === OBJ.SETZLING) {
+          m.obj[i] = OBJ.FELS;
+          m.objAmount[i] = 4;
+          this.growing.delete(i);
+          count++;
+        }
+      }
+    } else if (key === 'fisch') {
+      for (const i of tiles) {
+        if (m.terrain[i] === TERRAIN.WASSER) {
+          m.fish[i] = 6;
+          count++;
+        }
+      }
+    } else if (key === 'ernte') {
+      for (const i of tiles) {
+        if (m.obj[i] === OBJ.FELD && this.time - m.objTime[i] < FELD_WACHSTUM) {
+          m.objTime[i] = this.time - FELD_WACHSTUM;
+          count++;
+        }
+      }
+    } else if (key === 'bekehrung') {
+      for (const b of [...this.buildings.values()]) {
+        if (count >= 2) break;
+        if (b.player === player || !b.def.territory || Math.hypot(b.x - x, b.y - y) > r + 0.5) continue;
+        while (b.garrison.length && count < 2) {
+          const u = this.units.get(b.garrison.pop());
+          if (!u) continue;
+          u.player = player;
+          u.visible = true;
+          u.x = b.x + 0.5;
+          u.y = b.y + 1.5;
+          this.emit('verwandlung', { player, x: b.x, y: b.y + 1, job: 'soldat' });
+          this.stationSoldier(u);
+          count++;
+        }
+        if (b.type !== 'hq' && b.garrison.length === 0) this.territoryDirty = true;
+      }
+    }
+    if (!count) return 0;
+    p.mana -= spell.cost;
+    this.emit('zauber', { player, spell: key, x, y, count });
+    return count;
   }
 
   // ---------------------------------------------------------------- Gebiet

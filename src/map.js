@@ -12,6 +12,7 @@ export class GameMap {
     this.objAmount = new Uint8Array(n); // Felsgröße
     this.objTime = new Float32Array(n); // Pflanzzeitpunkt von Setzling/Feld
     this.fish = new Uint8Array(n); // Fische im Wasserfeld
+    this.elev = new Float32Array(n); // Geländehöhe, nur für die Optik (Relief-Schattierung)
     this.owner = new Int8Array(n).fill(-1);
     this.building = new Int32Array(n).fill(-1);
   }
@@ -158,5 +159,43 @@ export function generateMap(seed, w, h, playerCount) {
     if (map.terrain[i] === TERRAIN.WASSER) map.fish[i] = 2 + rng.int(3);
   }
 
+  computeElevation(map, seed);
   return { map, starts };
+}
+
+// Höhenrelief passend zum Gelände: Täler am Wasser, sanfte Hügel im Grasland, schroffe Berge.
+function computeElevation(map, seed) {
+  const { w, h } = map;
+  const e = map.elev;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = map.idx(x, y);
+      const n = fbm(x / 6 + 200, y / 6 + 200, seed + 31, 3);
+      switch (map.terrain[i]) {
+        case TERRAIN.WASSER: e[i] = 0.05; break;
+        case TERRAIN.SAND: e[i] = 0.22; break;
+        case TERRAIN.GRAS: e[i] = 0.3 + n * 0.45; break;
+        default: e[i] = 0.9 + fbm(x / 2.5, y / 2.5, seed + 47, 2) * 1.1;
+      }
+    }
+  }
+  const tmp = new Float32Array(w * h);
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let sum = 0, cnt = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!map.inside(x + dx, y + dy)) continue;
+            sum += e[map.idx(x + dx, y + dy)];
+            cnt++;
+          }
+        }
+        const i = map.idx(x, y);
+        // Berge nur leicht glätten, damit sie kantig bleiben.
+        tmp[i] = map.terrain[i] === TERRAIN.BERG ? e[i] * 0.6 + (sum / cnt) * 0.4 : sum / cnt;
+      }
+    }
+    e.set(tmp);
+  }
 }

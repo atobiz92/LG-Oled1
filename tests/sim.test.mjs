@@ -67,3 +67,35 @@ test('Krieg: Angreifer erobern Turm oder fallen, nichts stürzt ab', () => {
   console.log('Nach 25 Min:', JSON.stringify(s), 'Sieger:', g.winner,
     'Produziert:', g.players.map((p) => JSON.stringify(p.produced)).join(' | '));
 });
+
+test('Zauber: Verwandlungen und Bekehrung', () => {
+  const g = new Game({ seed: 4, factions: ['amazonen', 'roemer'], ai: [true, true] });
+  const p = g.players[0];
+  const hq = p.hq;
+  // Tempel direkt fertig hinstellen
+  let t = null;
+  for (let r = 2; r < 8 && !t; r++) {
+    for (let dy = -r; dy <= r && !t; dy++) {
+      for (let dx = -r; dx <= r && !t; dx++) t = g.placeBuilding(0, 'tempel', hq.x + dx, hq.y + dy);
+    }
+  }
+  assert.ok(t, 'Tempel platziert');
+  t.state = 'aktiv';
+  assert.equal(g.castSpell(0, 'wald', hq.x, hq.y), 0, 'ohne Mana kein Zauber');
+  p.mana = 40;
+  const m = g.map;
+  // Felsen in die Nähe legen und in Bäume verwandeln
+  const i = m.idx(hq.x + 2, hq.y + 2);
+  m.obj[i] = 3; // FELS
+  m.objAmount[i] = 3;
+  assert.ok(g.castSpell(0, 'wald', hq.x + 2, hq.y + 2) >= 1);
+  assert.equal(m.obj[i], 1, 'Felsen wurde Baum');
+  assert.equal(p.mana, 35);
+  // Bekehrung gegen das feindliche Hauptquartier
+  const foe = g.players[1].hq;
+  const before = foe.garrison.length;
+  assert.equal(g.castSpell(0, 'bekehrung', foe.x, foe.y), Math.min(2, before));
+  assert.equal(foe.garrison.length, before - Math.min(2, before));
+  const mine = [...g.units.values()].filter((u) => u.player === 0 && u.kind === 'soldat').length;
+  assert.equal(mine, 3 + Math.min(2, before));
+});

@@ -25,12 +25,14 @@ export const GOODS = {
   erz: { name: 'Eisenerz', icon: '🟤', color: '#8d4b3a' },
   eisen: { name: 'Eisen', icon: '🔩', color: '#5d6d7e' },
   schwert: { name: 'Waffe', icon: '🗡️', color: '#c0c6cc' },
+  bier: { name: 'Bier', icon: '🍺', color: '#d9a521' },
 };
 
 export const START_LAGER = {
   holz: 6, bretter: 26, stein: 20, getreide: 0, mehl: 0, brot: 6,
-  fisch: 6, kohle: 4, erz: 0, eisen: 0, schwert: 3,
+  fisch: 6, kohle: 4, erz: 0, eisen: 0, schwert: 3, bier: 0,
 };
+export const MANA_MAX = 60;
 export const START_TRAEGER = 14;
 export const START_SOLDATEN = 3;
 
@@ -134,6 +136,18 @@ export const BUILDINGS = {
     in: [['schwert']], workTime: 4, sfx: 'amboss',
     desc: 'Macht aus einem Träger und einer Waffe einen Soldaten.',
   },
+  brauerei: {
+    name: 'Brauerei', icon: '🍺', kind: 'verarbeiten', group: 'Magie',
+    cost: { bretter: 2, stein: 2 }, time: 10, worker: 'Brauer',
+    in: [['getreide']], out: 'bier', workTime: 5, sfx: 'blubbern',
+    desc: 'Braut Bier aus Getreide. Die Götter trinken gern einen mit.',
+  },
+  tempel: {
+    name: 'Tempel', icon: '⛩️', kind: 'verarbeiten', group: 'Magie',
+    cost: { bretter: 3, stein: 5 }, time: 16, worker: 'Priester',
+    in: [['bier']], out: null, mana: 2, workTime: 6, sfx: 'glocke',
+    desc: 'Bieropfer bringen Mana. Mit Mana wirkst du Zauber.',
+  },
   wachturm: {
     name: 'Wachturm', icon: '🗼', kind: 'militaer', group: 'Militär',
     cost: { bretter: 2, stein: 3 }, time: 10, territory: 6, capacity: 3,
@@ -155,6 +169,7 @@ export const FACTIONS = {
     name: 'Römer', motto: 'Ordnung, Straßen und viel zu viele Formulare.',
     roof: '#b33939', wall: '#efe2c4', style: 'giebel', women: false,
     soldier: 'Legionär', scale: 'dur', drum: 0.5,
+    bekehrung: { name: 'Bestechung', desc: 'Wein und Gold: bis zu 2 feindliche Soldaten wechseln die Seite.' },
     voice: { pitch: 0.9, rate: 1.0 },
     bonus: { speed: 1.0, attack: 1.0, defense: 1.15, work: 1.0 },
     bonusText: 'Verteidigung +15 %',
@@ -163,6 +178,7 @@ export const FACTIONS = {
     name: 'Wikinger', motto: 'Laut, bärtig und überraschend gute Zimmerleute.',
     roof: '#5b3a1e', wall: '#a77b4f', style: 'steil', women: false,
     soldier: 'Berserker', scale: 'dorisch', drum: 1.0,
+    bekehrung: { name: 'Met-Rausch', desc: 'Freibier! Bis zu 2 feindliche Soldaten laufen besoffen zu dir über.' },
     voice: { pitch: 0.6, rate: 0.95 },
     bonus: { speed: 1.0, attack: 1.15, defense: 1.0, work: 1.0 },
     bonusText: 'Angriff +15 %',
@@ -171,6 +187,7 @@ export const FACTIONS = {
     name: 'Ägypter', motto: 'Wer Pyramiden baut, baut auch Sägewerke.',
     roof: '#d4a62a', wall: '#f3e2a9', style: 'flach', women: false,
     soldier: 'Speerträger', scale: 'phrygisch', drum: 0.7,
+    bekehrung: { name: 'Fluch des Pharao', desc: 'Bis zu 2 feindliche Soldaten dienen ab sofort dem Pharao.' },
     voice: { pitch: 1.0, rate: 1.05 },
     bonus: { speed: 1.0, attack: 1.0, defense: 1.0, work: 1.15 },
     bonusText: 'Produktion +15 %',
@@ -179,8 +196,18 @@ export const FACTIONS = {
     name: 'Amazonen', motto: 'Die Donnerschwestern. Sie lesen die Bauanleitung UND gewinnen.',
     roof: '#7b4bc4', wall: '#e9d7f5', style: 'kuppel', women: true,
     soldier: 'Kampfamazone', scale: 'mixolydisch', drum: 0.8,
+    bekehrung: { name: 'Betörung', desc: 'Ein Augenaufschlag, und bis zu 2 feindliche Soldaten laufen verliebt zu dir über.' },
     voice: { pitch: 1.35, rate: 1.08 },
     bonus: { speed: 1.12, attack: 1.07, defense: 1.0, work: 1.0 },
     bonusText: 'Laufen +12 %, Angriff +7 %',
   },
+};
+
+// Zauber des Tempels. Kosten in Mana, Radius in Feldern um den Zielpunkt.
+export const SPELLS = {
+  wald: { name: 'Steine zu Bäumen', icon: '🌳', cost: 5, radius: 3, desc: 'Verwandelt Felsen in ausgewachsene Bäume.' },
+  stein: { name: 'Bäume zu Steinen', icon: '🪨', cost: 5, radius: 3, desc: 'Verwandelt Bäume in Felsen.' },
+  fisch: { name: 'Fischwunder', icon: '🐟', cost: 3, radius: 5, desc: 'Füllt das Wasser mit Fischen.' },
+  ernte: { name: 'Erntesegen', icon: '🌾', cost: 4, radius: 4, desc: 'Alle Felder im Umkreis sind sofort reif.' },
+  bekehrung: { name: 'Bekehrung', icon: '💘', cost: 12, radius: 4, desc: 'Bis zu 2 feindliche Soldaten wechseln die Seite.' },
 };

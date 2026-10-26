@@ -7,7 +7,7 @@ const BAULISTE = [
   ['wachturm', 2], ['holzfaeller', 3], ['kohlemine', 1], ['erzmine', 1], ['schmelze', 1],
   ['waffenschmied', 1], ['kaserne', 1], ['wohnhaus', 2], ['foerster', 2], ['wachturm', 4],
   ['steinmetz', 2], ['bauernhof', 2], ['kohlemine', 2], ['fischer', 2], ['wohnhaus', 3],
-  ['wachturm', 6], ['burg', 1], ['wachturm', 9],
+  ['brauerei', 1], ['tempel', 1], ['wachturm', 6], ['burg', 1], ['wachturm', 9],
 ];
 
 export class AI {
@@ -117,6 +117,8 @@ export class AI {
       }
     }
     if (!target) return;
+    // Vor dem Angriff ein paar Verteidiger auf die eigene Seite zaubern.
+    if (g.players[this.p].mana >= 12 && target.garrison.length) g.castSpell(this.p, 'bekehrung', target.x, target.y);
     const avail = g.attackersFor(this.p, target).length;
     const defenders = target.garrison.length;
     if (avail >= Math.max(4, defenders + 3)) g.attack(this.p, target, avail - 1);
