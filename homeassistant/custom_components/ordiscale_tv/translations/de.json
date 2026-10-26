@@ -1,0 +1,56 @@
+{
+  "title": "Ordiscale TV",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ordiscale TV einrichten",
+        "description": "Gekoppelte Fernseher erhalten einen eigenen Zugang für diesen Benutzer. Er darf kein Administrator sein. Empfohlen ist ein neuer Benutzer „Ordiscale TV“ (nur im lokalen Netz, ohne Anmeldung per Kennwort).",
+        "data": {
+          "user_id": "Benutzer für die Fernseher"
+        }
+      }
+    },
+    "error": {
+      "invalid_user": "Dieser Benutzer ist nicht wählbar (Administrator, inaktiv oder unbekannt)."
+    },
+    "abort": {
+      "single_instance_allowed": "Ordiscale TV ist bereits eingerichtet.",
+      "user_would_be_admin": "Der neue Benutzer wäre Administrator geworden (Home Assistant hat noch keinen Eigentümer). Bitte zuerst die Einrichtung von Home Assistant abschließen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ordiscale TV",
+        "description": "Gekoppelte Fernseher: {count}. Ausgewählte Fernseher verlieren ihren Zugang sofort.",
+        "data": {
+          "pairing_enabled": "Kopplung neuer Fernseher erlauben",
+          "revoke": "Zugang widerrufen für"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "pairing_disabled": {
+      "message": "Die Kopplung ist ausgeschaltet."
+    },
+    "not_found": {
+      "message": "Diese Kopplung ist abgelaufen oder unbekannt. Bitte am Fernseher neu starten."
+    },
+    "not_pending": {
+      "message": "Diese Kopplung wurde bereits bearbeitet."
+    },
+    "denied": {
+      "message": "Diese Kopplung ist gesperrt. Bitte am Fernseher neu starten."
+    },
+    "invalid_code": {
+      "message": "Der Code stimmt nicht. Noch {attempts_left} Versuche."
+    },
+    "invalid_format": {
+      "message": "Der Code hat 6 Zeichen aus Ziffern 2–9 und Buchstaben ohne I und O."
+    },
+    "user_unavailable": {
+      "message": "Der TV-Benutzer fehlt, ist deaktiviert oder ist Administrator. Bitte die Integration prüfen."
+    }
+  }
+}

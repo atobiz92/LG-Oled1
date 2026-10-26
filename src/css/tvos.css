@@ -1,0 +1,2294 @@
+/*
+ * tvOS-26-style theme ("Liquid Glass"), layered over style.css.
+ * Home's top shelf, favourites row and app grid are laid out only here, so removing this file's
+ * <link> in index.html no longer gives a clean original look.
+ *
+ * Same hardware rules as style.css: glass is faked with flat translucent fills and inset
+ * box-shadows (blurred shadows measured free), no backdrop-filter and no live gradient layers.
+ * Only the Home tiles and the gear animate, and only their transform.
+ */
+:root {
+    --fg: #f5f5f7;
+    --muted: rgba(235, 235, 245, 0.62);
+    --faint: rgba(235, 235, 245, 0.62);
+    --ink: #1c1c1e;                     /* text on a focused (white) surface */
+    --accent: #0a84ff;
+    --glass: rgba(255, 255, 255, 0.11);
+    --rim: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --rim-lit: inset 0 2px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+    --lift: 0 30px 60px rgba(0, 0, 0, 0.55);
+    /* Ordiscale brand: turquoise only for active states (the focused row, the glow), Nebel for quiet
+       light on dark (Markenhandbuch Kap. 7). */
+    --turq: #0aa6b4;
+    --nebel: #b9d4df;
+}
+
+/* ---------- Home ---------- */
+
+/* Large thin clock top right; the first appointment on the left sits on the height of its digits
+   (Settings → Darstellung → Startseite oben: "Uhr rechts", the default). */
+.clock {
+    top: 46px;
+    left: auto;
+    right: 232px;
+    text-align: right;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+
+#time {
+    font-size: 108px;
+    font-weight: 300;
+    letter-spacing: -3px;
+}
+
+#time-suffix {
+    margin-left: 8px;
+    font-size: 40px;
+    font-weight: 500;
+}
+
+#date {
+    margin-top: 6px;
+    font-size: calc(28px * var(--ts));
+    font-weight: 500;
+}
+
+.net {
+    justify-content: flex-end;
+}
+
+.net.offline {
+    color: #ff453a;
+}
+
+.gear {
+    top: 78px;              /* centred on the clock's digits */
+    width: 84px;
+    height: 84px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+    color: var(--fg);
+}
+
+.gear svg {
+    top: 20px;
+    left: 20px;
+}
+
+.gear.focused {
+    background: var(--fg);
+    color: var(--ink);
+    transform: scale(1.12);
+    box-shadow: var(--lift);
+}
+
+/* The rows sit low over a full-bleed wallpaper, like tvOS's full-screen top shelf. A hidden
+   Consoles row collapses, so the app row always ends up just above the hints. */
+.clock-sub {
+    justify-content: flex-end;
+    gap: 22px;
+    margin-top: 0;
+}
+
+/* "Uhr links": clock, date and appointments in one column on the left, like a lock screen; top right
+   only the gear. Two appointments (home.js AGENDA_LAYOUTS). */
+#home.layout-column .clock {
+    top: 44px;
+    left: var(--edge);
+    right: auto;
+    text-align: left;
+}
+
+#home.layout-column #time {
+    font-size: 96px;
+    letter-spacing: -2px;
+}
+
+#home.layout-column #time-suffix {
+    font-size: 36px;
+}
+
+#home.layout-column .clock-sub {
+    justify-content: flex-start;
+}
+
+#home.layout-column .agenda {
+    top: 220px;
+}
+
+/* In the date line weather and network take the date's size, not their own larger one. */
+.clock-sub .wx {
+    gap: 8px;
+    font-size: calc(26px * var(--ts));
+}
+
+.clock-sub .wx svg {
+    width: 28px;
+    height: 30px;
+}
+
+.clock-sub .net svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* Home scrolls as one layer (home.js scrollHome). At rest the first app row sits in the lower half
+   under the top shelf and the next row peeks in, as on Apple TV. */
+#home-scroll {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: 400px;
+    will-change: transform;
+    transition: transform 0.25s ease-out;
+}
+
+#shelves {
+    position: relative;
+    margin-left: var(--edge);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrolled: agenda, clock and gear fade, a flat dim layer darkens the wallpaper. */
+#home .clock,
+#home .agenda,
+#home .gear {
+    transition: opacity 0.2s;
+}
+
+#home.scrolled .clock,
+#home.scrolled .agenda,
+#home.scrolled .gear {
+    opacity: 0;
+}
+
+/* Agenda: focusable from the favourites with Up (OK opens the week view). The focus is a faint
+   glass plate that fades in behind the text; padding and the matching negative margin keep the
+   text exactly where it was, so focusing moves nothing. Shrinks to its text up to 880px. */
+.agenda {
+    z-index: 0;
+    width: auto;
+    max-width: 880px;
+    padding: 16px 26px;
+    margin: -16px 0 0 -26px;
+}
+
+.agenda::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: var(--rim);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.agenda.focused::before {
+    opacity: 1;
+}
+
+.agenda .alerts {
+    margin-bottom: 18px;
+}
+
+.agenda.alerts-only .alerts {
+    margin-bottom: 0;
+}
+
+/* Night (js/appearance.js): the same flat dim layer as when Home is scrolled, but lighter:
+   black at 60% x 0.75 = 45%, so the wallpaper keeps about 55% of its brightness. Opacity only.
+   Before the scrolled rule, so scrolling still goes to full dim. */
+#home.night .home-dim {
+    opacity: 0.75;
+}
+
+.home-dim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    will-change: opacity;
+    transition: opacity 0.25s;
+}
+
+#home.scrolled .home-dim {
+    opacity: 1;
+}
+
+/* All apps on Home: five across, the same tiles as the first row (HOME_GRID_COLS in home.js). */
+.home-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 300px);
+    column-gap: 45px;
+    row-gap: 24px;
+    padding-bottom: 120px;
+}
+
+.home-grid .app {
+    width: 300px;
+}
+
+.home-grid .app .tile {
+    height: 180px;
+}
+
+#shelves .shelf {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+}
+
+/* Spacing chosen so three rows plus the top shelf still clear each other at the largest text size. */
+#shelves .shelf + .shelf {
+    margin-top: 24px;
+}
+
+#apps-section h2 {
+    display: none;
+}
+
+/* Favourites row: five apps on a faint glass shelf, set off from the grid below. The negative
+   margin keeps the tiles on the same columns as the grid. */
+#apps-section {
+    margin-left: -32px;
+    padding: 32px;
+    width: 1680px;          /* content box: five tiles and four gaps; padding comes on top */
+    border-radius: 44px;
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: var(--rim);
+}
+
+#apps-section .row-track .app:last-child {
+    margin-right: 0;
+}
+
+.ed-fav {
+    margin-left: auto;
+    color: #ffd60a;
+}
+
+.ed-fav svg,
+.ed-move svg {
+    display: block;
+    width: 30px;
+    height: 30px;
+}
+
+.shelf h2,
+.setting-block h2,
+.ed-col h2 {
+    font-size: calc(28px * var(--ts));
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.row-track .app {
+    width: 300px;
+    margin-right: 45px;     /* lines up with the grid columns below */
+}
+
+.row-track .app .tile {
+    height: 180px;
+}
+
+/* Apple TV-style icon light: a soft sheen across the top of each tile, brighter and angled on
+   focus. Static gradients on small tiles; if the Lab render probe shows a cost on the TV, these
+   two rules are the ones to delete. */
+.app .tile::after,
+.input .tile::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 50%);
+    /* The rim lives here, not on the tile: an inset shadow on the tile is painted under its children,
+       so a full-bleed icon covered it and the edge showed gaps. */
+    box-shadow: var(--rim);
+    pointer-events: none;
+}
+
+.app.focused .tile::after,
+.input.focused .tile::after {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0) 60%);
+    box-shadow: var(--rim-lit);
+}
+
+.icons-ordiscale .app.focused .tile::after,
+.icons-ordiscale .input.focused .tile::after {
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 0 0 2px rgba(110, 215, 224, 0.45);
+}
+
+/* Bolder logos, closer to full-bleed app icons. Brands with their own `pad` keep it. */
+.mark {
+    top: 22%;
+    left: 18%;
+    width: 64%;
+    height: 56%;
+}
+
+.tile {
+    border-radius: 32px;
+    box-shadow: var(--rim);
+}
+
+.app.focused .tile,
+.input.focused .tile {
+    transform: scale(1.12);
+    box-shadow: var(--lift);
+}
+
+.app .tile,
+.input .tile {
+    box-shadow: none;       /* the rim is on ::after, above the icon */
+}
+
+.app .label {
+    margin-top: 16px;
+    font-size: calc(26px * var(--ts));
+    font-weight: 600;
+    text-align: center;
+}
+
+.input .tile {
+    height: 160px;
+}
+
+/* Moving an app (held OK → Bewegen): it wobbles like an Apple TV icon. Transform only. */
+.app.moving .tile {
+    animation: wobble 0.28s ease-in-out infinite alternate;
+}
+
+@keyframes wobble {
+    from { transform: scale(1.12) rotate(-1.6deg); }
+    to { transform: scale(1.12) rotate(1.6deg); }
+}
+
+/* Wide console tiles grow less, so a focused one does not run into its neighbour. */
+.input.focused .tile {
+    transform: scale(1.05);
+}
+
+.dot.on { background: #30d158; }
+
+/* ---------- Pages ---------- */
+
+.page {
+    background: rgba(0, 0, 0, 0.74);
+}
+
+.page-head h1 {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.setting-row {
+    border-radius: 24px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+    font-size: calc(34px * var(--ts));
+    font-weight: 500;
+}
+
+.setting-row.focused,
+.chip.focused,
+.ed-item.focused,
+#menu-list li.focused,
+.dialog-actions li.focused,
+.lab-list li.focused {
+    background: var(--fg);
+    color: var(--ink);
+}
+
+.setting-row.focused,
+.chip.focused {
+    transform: scale(1.03);
+    box-shadow: var(--lift);
+}
+
+.setting-row.focused .setting-value {
+    color: rgba(28, 28, 30, 0.6);
+}
+
+/* A value that needs attention (certificate about to expire): amber on glass, darker on the white focus */
+.setting-value.warn {
+    color: var(--warn-moderate);
+    font-weight: 600;
+}
+
+.setting-row.focused .setting-value.warn {
+    color: #9a5b00;
+}
+
+.chip {
+    border-radius: 999px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+}
+
+.chip.on {
+    background: rgba(10, 132, 255, 0.45);
+}
+
+/* Chosen and focused at once: the focus colour wins (the blue above came later in the cascade
+   and left dark text on blue). The check mark stays, so "chosen" still reads. */
+.chip.on.focused {
+    background: var(--fg);
+    color: var(--ink);
+}
+
+.thumb img {
+    border-radius: 22px;
+}
+
+.thumb.on img {
+    box-shadow: 0 0 0 4px var(--accent);
+}
+
+.thumb.on .thumb-title::before {
+    color: var(--accent);
+}
+
+.thumb.focused img {
+    transform: scale(1.08);
+    box-shadow: var(--lift), 0 0 0 4px var(--fg);
+}
+
+.ed-item {
+    border-radius: 18px;
+}
+
+/* Lab list: the same rounding as the other lists, focused or not. */
+.lab-list li {
+    border-radius: 18px;
+}
+
+.ed-item.moving {
+    background: var(--accent);
+}
+
+.mini .tile {
+    border-radius: 14px;
+}
+
+/* ---------- Pop-up menu, toast, hints ---------- */
+
+.overlay {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.menu-box {
+    border-radius: 40px;
+    background: rgba(44, 44, 48, 0.95);
+    box-shadow: var(--rim), 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+#menu-list li {
+    border-radius: 20px;
+}
+
+#rename-input {
+    border-radius: 18px;
+}
+
+.dialog-actions li {
+    border-radius: 20px;
+}
+
+#toast {
+    border-radius: 999px;
+    background: rgba(44, 44, 48, 0.95);
+    box-shadow: var(--rim), var(--lift);
+}
+
+.hint-key {
+    border: 0;
+    border-radius: 999px;
+    padding: 4px 16px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+}
+
+/* Round remote keys (ui.js KEY_ICONS): the select button and the Back arrow. */
+.hint-key.round {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.hint-key.round svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* First-run assistant: the question's hint sits under the heading, the answers scroll below it. */
+#setup .list-port {
+    top: 270px;
+}
+
+.setup-hint {
+    position: absolute;
+    top: 184px;
+    left: var(--edge);
+    right: var(--edge);
+    font-size: calc(28px * var(--ts));
+    color: var(--muted);
+}
+
+/* ---------- Week view (js/week.js) ---------- */
+
+.week-body {
+    position: absolute;
+    top: 190px;
+    left: var(--edge);
+    right: var(--edge);
+    bottom: 110px;
+    display: flex;
+    flex-direction: column;
+}
+
+#week-alerts {
+    margin-bottom: 20px;
+}
+
+#week-alerts .alert {
+    max-width: 1100px;
+    align-self: flex-start;
+}
+
+.week-cols {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-gap: 14px;
+}
+
+.wk-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: 14px;
+    border-radius: 24px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+}
+
+.wk-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: calc(24px * var(--ts));
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.wk-date {
+    font-size: calc(20px * var(--ts));
+    font-weight: 500;
+    color: var(--muted);
+}
+
+/* Today: a white head, like a focused row elsewhere. */
+.wk-col.today .wk-head {
+    background: var(--fg);
+    color: var(--ink);
+}
+
+.wk-col.today .wk-date {
+    color: rgba(28, 28, 30, 0.6);
+}
+
+.wk-list {
+    flex: 1;
+    min-height: 0;
+    margin-top: 14px;
+    overflow: hidden;
+}
+
+.wk-ev {
+    margin-bottom: 12px;
+}
+
+.wk-time {
+    font-size: calc(19px * var(--ts));
+    font-weight: 500;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.wk-title {
+    font-size: calc(22px * var(--ts));
+    font-weight: 600;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+/* A holiday is a line of its own at the top of its day. */
+.wk-hol {
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: rgba(255, 214, 10, 0.2);
+    font-size: calc(20px * var(--ts));
+    font-weight: 600;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.wk-more {
+    font-size: calc(20px * var(--ts));
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* ---------- Home Assistant "Zuhause" (js/ha-view.js) ----------
+   Glass tiles on the app grid's columns (five of 300px); a camera takes 2 x 2. The list scrolls as
+   one layer in the port; the port's padding is room for the focus growth and shadow. Tiles grow a
+   little with the text size so name and state keep their two lines. Grid gaps only (no flex gap). */
+.ha-port {
+    position: absolute;
+    top: 150px;
+    bottom: 96px;
+    left: 80px;
+    width: 1760px;
+    padding: 28px 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.ha-track {
+    position: relative;
+    will-change: transform;
+    transition: transform 0.22s ease-out;
+}
+
+.ha-group {
+    padding-bottom: 36px;
+}
+
+.ha-group h2 {
+    margin-bottom: 18px;
+    font-size: calc(28px * var(--ts));
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.ha-grid {
+    position: relative;     /* offsetParent of the tiles: ha-view.js scrollTo measures against it */
+    display: grid;
+    grid-template-columns: repeat(5, 300px);
+    grid-auto-rows: calc(130px + 50px * var(--ts));   /* 180px at Standard, 195px at Sehr groß */
+    grid-auto-flow: row dense;
+    column-gap: 45px;
+    row-gap: 24px;
+}
+
+.ha-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 20px 24px;
+    box-sizing: border-box;
+    border-radius: 32px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+    color: var(--fg);
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+}
+
+.ha-icon {
+    position: absolute;
+    top: 18px;
+    left: 22px;
+    width: 36px;
+    height: 36px;
+    color: var(--muted);
+}
+
+.ha-icon svg {
+    display: block;
+    width: 36px;
+    height: 36px;
+}
+
+.ha-name {
+    font-size: calc(26px * var(--ts));
+    font-weight: 600;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.ha-state {
+    margin-top: 4px;
+    font-size: calc(22px * var(--ts));
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Switched on: warm, like a lit lamp. */
+.ha-tile.on {
+    background: rgba(255, 179, 64, 0.3);
+}
+
+.ha-tile.on .ha-icon {
+    color: #ffd60a;
+}
+
+.ha-tile.off-line {
+    opacity: 0.55;
+}
+
+/* Waiting for Home Assistant to answer a command. */
+.ha-tile.busy {
+    opacity: 0.7;
+}
+
+.ha-tile.focused {
+    background: var(--fg);
+    color: var(--ink);
+    transform: scale(1.08);
+    box-shadow: var(--lift), var(--rim-lit);
+}
+
+.ha-tile.focused .ha-icon,
+.ha-tile.focused .ha-state {
+    color: rgba(28, 28, 30, 0.6);
+}
+
+.ha-tile.on.focused .ha-icon {
+    color: #b25d00;
+}
+
+/* Cameras: placed by ha-view.js camRects in the block at the top; a small name and the time of the
+   picture at the bottom. The picture keeps the tile's rounding without overflow clipping (the image
+   itself is rounded). */
+.ha-tile.camera {
+    position: absolute;
+    padding: 0;
+    border-radius: 22px;
+    background: #10141c;
+}
+
+/* The picture covers the white focus fill, so a camera shows its focus as a white ring. */
+.ha-tile.camera.focused {
+    background: #000;
+    transform: scale(1.04);
+    box-shadow: var(--lift), 0 0 0 5px var(--fg);
+}
+
+.ha-cam-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+.ha-cam-none {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin-top: calc(-18px * var(--ts));
+    text-align: center;
+    font-size: calc(28px * var(--ts));
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.no-image .ha-cam-img { visibility: hidden; }
+.no-image .ha-cam-none { display: block; }
+
+/* Quiet and short: one word where possible ("Klingel", "Einfahrt"), on a small dark plate. */
+.ha-cam-name {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    max-width: 70%;
+    padding: 4px 12px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: calc(21px * var(--ts));
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* A 180-degree camera (2:1 and wider) whole, with dark bars above and below (ha-view.js loadPicture). */
+.ha-tile.camera.wide .ha-cam-img { object-fit: contain; }
+
+/* Only for an old picture (more than 10 s): amber, on a plate like the name. */
+.ha-cam-time {
+    display: none;
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    padding: 4px 12px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    font-size: calc(18px * var(--ts));
+    font-weight: 600;
+    color: #f5b94a;
+    font-variant-numeric: tabular-nums;
+}
+
+.stale .ha-cam-time { display: block; }
+
+/* Instead of tiles: why there are none, and at most one button. */
+.ha-empty {
+    position: absolute;
+    top: 260px;
+    left: var(--edge);
+    width: 1200px;
+}
+
+.ha-empty h2 {
+    font-size: calc(44px * var(--ts));
+    font-weight: 700;
+}
+
+.ha-empty p {
+    margin: 18px 0 32px;
+    font-size: calc(30px * var(--ts));
+    line-height: 1.35;
+    color: var(--muted);
+}
+
+.ha-action {
+    display: inline-block;
+    padding: 18px 36px;
+    border-radius: 24px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+    font-size: calc(30px * var(--ts));
+    font-weight: 600;
+}
+
+.ha-action.focused {
+    background: var(--fg);
+    color: var(--ink);
+    box-shadow: var(--lift);
+}
+
+/* A camera full screen, refreshed every 2 s; Back closes it. */
+.ha-full {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background: #000;
+}
+
+.ha-full .ha-cam-img {
+    border-radius: 0;
+    object-fit: contain;
+}
+
+.ha-full-name {
+    position: absolute;
+    top: 48px;
+    left: var(--edge);
+    font-size: calc(36px * var(--ts));
+    font-weight: 600;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+
+
+/* ---------- Home Assistant "Sicherheit": the cockpit (js/ha-view.js, decision 26.10.2026) ----------
+   Cameras top left (block 1160 wide), state and "Zuletzt" beside them (490), then chips for doors,
+   windows and motion, the door openers, the other devices. Meant to stay on for hours: a darker page
+   than elsewhere (no bright wallpaper behind it), #ha-shift moves a few pixels every 3 minutes, the
+   hints fade after a minute without a key, a flat layer dims at night. Margins only, no flex gap. */
+#ha {
+    background: rgba(5, 7, 11, 0.92);
+}
+
+.ha-shift {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    will-change: transform;
+    transition: transform 3s ease-in-out;
+}
+
+.ha-head {
+    top: 50px;
+    align-items: flex-end;
+}
+
+.ha-head h1 {
+    font-size: 60px;
+    line-height: 1.05;
+}
+
+.ha-sub {
+    margin-top: 6px;
+    font-size: calc(26px * var(--ts));
+    color: var(--muted);
+}
+
+#ha-status {
+    font-size: calc(24px * var(--ts));
+}
+
+.ha-sec {
+    position: relative;
+    padding-bottom: 34px;
+}
+
+.ha-sec > h2 {
+    margin-bottom: 14px;
+    font-size: calc(20px * var(--ts));
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.ha-top {
+    margin-bottom: 28px;
+    padding-bottom: 0;
+}
+
+.ha-cams,
+.ha-side {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.ha-card {
+    border-radius: 26px;
+    background: var(--glass);
+    box-shadow: var(--rim);
+}
+
+/* State: one line that says whether everything is shut. */
+.ha-status {
+    position: relative;
+    height: 150px;
+    padding: 28px 26px 0 80px;
+    box-sizing: border-box;
+}
+
+.ha-dot {
+    position: absolute;
+    top: 38px;
+    left: 30px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #8e8e93;
+}
+
+.ha-status.lv-ok .ha-dot { background: #30d158; }
+.ha-status.lv-open .ha-dot { background: #ffb340; }
+.ha-status.lv-alarm .ha-dot { background: #ff453a; }
+.ha-status.lv-open { background: rgba(255, 179, 64, 0.12); box-shadow: inset 0 0 0 1.5px rgba(255, 179, 64, 0.4); }
+.ha-status.lv-alarm { background: rgba(255, 69, 58, 0.24); box-shadow: inset 0 0 0 2px rgba(255, 69, 58, 0.7); }
+
+.ha-status-title {
+    font-size: calc(34px * var(--ts));
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.ha-status-sub,
+.ha-status-alarm {
+    margin-top: 4px;
+    font-size: calc(22px * var(--ts));
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ha-status-alarm {
+    font-size: calc(19px * var(--ts));
+}
+
+/* "Zuletzt": the list clips without rounded clipping (the card is rounded, the list is not). */
+.ha-log {
+    position: absolute;
+    top: 170px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+/* The log card is focusable (OK: all twelve), as a white ring, not the white fill of a tile. */
+.ha-log.ha-tile {
+    display: block;
+    position: absolute;
+    padding: 0;
+}
+
+.ha-log.ha-tile.focused {
+    background: var(--glass);
+    color: var(--fg);
+    transform: scale(1.02);
+    box-shadow: var(--lift), 0 0 0 4px var(--fg);
+}
+
+.ha-log-more {
+    position: absolute;
+    top: 22px;
+    right: 26px;
+    font-size: calc(20px * var(--ts));
+    color: var(--muted);
+}
+
+/* Brightness of a light: a bar, Left/Right in 10 % steps (ha-view.js openSlider). The fill grows
+   by transform, not width, so a step repaints nothing but the bar. */
+.ha-slider {
+    position: absolute;
+    top: 380px;
+    left: 460px;
+    width: 1000px;
+    height: 320px;
+    border-radius: 28px;
+    background: #141821;
+    box-shadow: 0 0 0 2000px rgba(4, 6, 10, 0.88), 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.ha-slider-title {
+    position: absolute;
+    top: 44px;
+    left: 56px;
+    right: 56px;
+    font-size: calc(36px * var(--ts));
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ha-slider-track {
+    position: absolute;
+    top: 160px;
+    left: 56px;
+    right: 56px;
+    height: 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    overflow: hidden;
+}
+
+.ha-slider-fill {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    transform-origin: 0 50%;
+    transition: transform 0.12s ease-out;
+}
+
+.ha-slider-pct {
+    position: absolute;
+    top: 214px;
+    left: 56px;
+    font-size: calc(30px * var(--ts));
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* All events: a panel over the cockpit, dark around it like the popup. */
+.ha-logall {
+    position: absolute;
+    top: 70px;
+    left: 460px;
+    width: 1000px;
+    height: 940px;
+    border-radius: 28px;
+    background: #141821;
+    box-shadow: 0 0 0 2000px rgba(4, 6, 10, 0.88), 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.ha-logall .ha-card-h {
+    top: 34px;
+    left: 44px;
+}
+
+.ha-logall-list {
+    position: absolute;
+    top: 96px;
+    left: 44px;
+    right: 44px;
+    bottom: 30px;
+    overflow: hidden;
+}
+
+.ha-logall .ha-log-row {
+    height: calc(52px * var(--ts));   /* twelve rows fit up to "Sehr groß" */
+    font-size: calc(28px * var(--ts));
+}
+
+.ha-logall .ha-log-tm { width: calc(96px * var(--ts)); }
+
+.ha-card-h {
+    position: absolute;
+    top: 22px;
+    left: 28px;
+    font-size: calc(20px * var(--ts));
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.ha-log-list {
+    position: absolute;
+    top: calc(36px + 28px * var(--ts));
+    left: 28px;
+    right: 24px;
+    bottom: 16px;
+    overflow: hidden;
+}
+
+.ha-log-row {
+    display: flex;
+    align-items: center;
+    height: calc(40px * var(--ts));
+    font-size: calc(22px * var(--ts));
+    white-space: nowrap;
+}
+
+.ha-log-tm {
+    flex: none;
+    width: calc(70px * var(--ts));
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.ha-log-ic {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    color: var(--muted);
+}
+
+.ha-log-ic svg,
+.ha-chip-ic svg,
+.ha-more-ic svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.ha-log-tx {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.k-bell .ha-log-ic { color: #ffd60a; }
+.k-open .ha-log-ic { color: #ffb340; }
+.k-alarm .ha-log-ic,
+.k-alarm .ha-log-tx { color: #ff6961; }
+
+.ha-log-empty {
+    font-size: calc(22px * var(--ts));
+    color: var(--muted);
+}
+
+/* Chips: doors, windows, garage, motion, alarm; the door openers and lights in the same shape. */
+.ha-chips {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: -16px;
+}
+
+.ha-tile.ha-chip {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: calc(52px + 22px * var(--ts));
+    margin: 0 16px 16px 0;
+    padding: 0 26px 0 22px;
+    border-radius: 22px;
+    font-size: calc(26px * var(--ts));
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Wide chips (long names, large text) grow less and have a limit: grown, a chip must stay clear of
+   its neighbour (gap 16 px), or the arrow keys would skip it (ha-view.js neighbour). */
+.ha-tile.ha-chip { max-width: 900px; }
+
+.ha-chip-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ha-chip-val { flex: none; }
+
+.ha-chip-ic,
+.ha-chip .ha-icon {
+    position: static;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    margin-right: 14px;
+    color: var(--muted);
+}
+
+.ha-chip .ha-icon svg {
+    width: 30px;
+    height: 30px;
+}
+
+.ha-chip-val {
+    margin-left: 14px;
+    font-size: calc(22px * var(--ts));
+    color: var(--muted);
+}
+
+.ha-chip.lv-ok .ha-chip-ic { color: #30d158; }
+.ha-chip.lv-open { background: rgba(255, 179, 64, 0.16); box-shadow: inset 0 0 0 1.5px rgba(255, 179, 64, 0.45); }
+.ha-chip.lv-open .ha-chip-ic { color: #ffb340; }
+.ha-chip.lv-alarm { background: rgba(255, 69, 58, 0.24); box-shadow: inset 0 0 0 2px rgba(255, 69, 58, 0.7); }
+.ha-chip.lv-alarm .ha-chip-ic { color: #ff453a; }
+.ha-chip.lv-off { opacity: 0.55; }
+
+/* Focused: white like every other focused element, whatever the chip's state colour. */
+.ha-tile.ha-chip.focused {
+    background: var(--fg);
+    color: var(--ink);
+    box-shadow: var(--lift), var(--rim-lit);
+    transform: scale(1.04);   /* see max-width above: a grown chip stays clear of its neighbour */
+}
+
+.ha-chip.focused .ha-chip-ic,
+.ha-chip.focused .ha-chip-val,
+.ha-chip.focused .ha-icon {
+    color: rgba(28, 28, 30, 0.6);
+}
+
+.ha-chip.lv-open.focused .ha-chip-ic { color: #b25d00; }
+
+/* Door opener: a bar fills while OK is held; after 2 s the question comes. */
+.ha-act.opener {
+    background: rgba(10, 166, 180, 0.18);
+    box-shadow: inset 0 0 0 1.5px rgba(110, 215, 224, 0.45);
+}
+
+.ha-act.opener .ha-chip-ic { color: #6ed7e0; }
+.ha-act.opener.focused .ha-chip-ic { color: #087f8a; }
+
+.ha-hold {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 7px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--turq);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+}
+
+.ha-act.holding .ha-hold {
+    transform: scaleX(1);
+    transition: transform 2s linear;
+}
+
+.ha-act.on {
+    background: rgba(255, 179, 64, 0.3);
+}
+
+.ha-act.on .ha-icon { color: #ffd60a; }
+
+/* "Weitere Geräte": the tiles by area. */
+.ha-more .ha-group {
+    padding-bottom: 30px;
+}
+
+.ha-more .ha-group h3 {
+    margin-bottom: 16px;
+    font-size: calc(26px * var(--ts));
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* More than six cameras: the last place turns the page. */
+.ha-tile.camera.more {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--glass);
+}
+
+.ha-more-ic {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 14px;
+    color: var(--muted);
+}
+
+.ha-more-text {
+    font-size: calc(24px * var(--ts));
+    font-weight: 600;
+}
+
+.ha-tile.camera.more.focused {
+    background: var(--fg);
+    color: var(--ink);
+}
+
+/* Live picture (js/ha-live.js): stills until the stream has a frame. */
+.ha-video,
+.ha-avplay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.ha-video {
+    visibility: hidden;
+    object-fit: contain;
+    border-radius: inherit;
+}
+
+.is-live .ha-video { visibility: visible; }
+.is-live .ha-cam-img { visibility: hidden; }
+
+/* AVPlay draws on the video plane under the page: everything above the picture turns transparent,
+   and the cockpit itself goes (in the popup it is behind the 94 % dark frame anyway). */
+html.ha-avplay,
+html.ha-avplay body,
+html.ha-avplay #stage,
+html.ha-avplay #ha,
+html.ha-avplay .ha-full,
+html.ha-avplay .ha-pop-cam { background: transparent; }
+html.ha-avplay #bg,
+html.ha-avplay #ha-shift { visibility: hidden; }
+
+.ha-live-badge {
+    position: absolute;
+    top: 44px;
+    right: var(--edge);
+    padding: 5px 14px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    font-size: calc(20px * var(--ts));
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.ha-live-badge:empty { display: none; }
+.ha-live-badge.m-live { background: rgba(255, 69, 58, 0.85); }
+
+/* Doorbell, door opened, alarm: the camera big and live, the rest dimmed by its shadow (a box-shadow,
+   measured free), so the picture itself stays a transparent hole for AVPlay. */
+.ha-pop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+}
+
+.ha-pop-cam {
+    position: absolute;
+    top: 100px;
+    left: 300px;
+    width: 1320px;
+    height: 742px;
+    border-radius: 28px;
+    background: #000;
+    box-shadow: 0 0 0 2000px rgba(4, 6, 10, 0.94), 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.ha-pop-cam .ha-cam-img { object-fit: contain; }
+
+.ha-pop-cam .ha-live-badge {
+    top: 22px;
+    right: 22px;
+}
+
+.ha-pop.k-alarm .ha-pop-cam {
+    box-shadow: 0 0 0 2000px rgba(30, 4, 4, 0.94), 0 0 0 6px #ff453a;
+}
+
+.ha-pop.no-cam {
+    background: rgba(4, 6, 10, 0.94);
+}
+
+.ha-pop.no-cam .ha-pop-cam { display: none; }
+.ha-pop.no-cam .ha-pop-foot { top: 440px; }
+
+.ha-pop-foot {
+    position: absolute;
+    top: 872px;
+    left: 300px;
+    width: 1320px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ha-pop-title {
+    font-size: calc(44px * var(--ts));
+    font-weight: 700;
+}
+
+.ha-pop.k-alarm .ha-pop-title { color: #ff6961; }
+
+.ha-pop-sub {
+    margin-top: 6px;
+    font-size: calc(24px * var(--ts));
+    color: var(--muted);
+}
+
+.ha-pop-actions .ha-tile.ha-chip {
+    margin: 0;
+    height: 96px;
+    padding: 0 34px 0 28px;
+    font-size: calc(30px * var(--ts));
+}
+
+/* Night: a flat dark layer (opacity only); a key or an event makes it bright again. */
+.ha-dim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    will-change: opacity;
+    transition: opacity 1.5s;
+}
+
+#ha.dimmed .ha-dim { opacity: 0.55; }
+
+/* After a minute without a key the hint bar fades: no static bright text for hours. */
+.hints { transition: opacity 0.6s; }
+#ha.idle:not(.hidden) ~ #hints { opacity: 0; }
+
+
+/* ---------- Focus glow on Home (icon style "Ordiscale", home.js glowTo) ----------
+   One element for the whole of Home, behind shelves and agenda. The glow is a blurred box-shadow
+   (measured free on the Q70B) painted once; it follows the focus with transform and fades with
+   opacity only, both composited, so focus moves cost no repaint. Sized per kind of tile in JS. */
+.home-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 180px;
+    border-radius: 32px;
+    background: rgba(10, 166, 180, 0.3);
+    box-shadow: 0 0 72px 24px rgba(10, 166, 180, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+    transition: transform 0.22s ease-out, opacity 0.2s;
+}
+
+.icons-ordiscale .home-glow.on {
+    opacity: 1;
+}
+
+/* With the glow the selected tile casts a lighter shadow (the dark one swallowed the glow below it)
+   and a faintly turquoise rim. Its box-shadow changes on focus anyway: no extra repaint. */
+.icons-ordiscale .app.focused .tile,
+.icons-ordiscale .input.focused .tile {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+}
+
+.icons-ordiscale .agenda.focused::before {
+    box-shadow: inset 0 0 0 1.5px rgba(110, 215, 224, 0.4);
+}
+
+/* ---------- Settings pages (js/settings.js renderPage), measured from the tvOS mock-up ----------
+   Title top left (with the parent page small above it), a stage on the left (x 120, 700 wide) and
+   the grouped list on the right (x 900, 900 wide). Rows 82px, groups rounded 30px. No flex gap:
+   margins only, so nothing needs a Chromium 76 fallback. */
+.split-head {
+    position: absolute;
+    top: 70px;
+    left: var(--edge);
+    right: var(--edge);
+}
+
+.split-head .crumb {
+    font-size: calc(26px * var(--ts));
+    font-weight: 500;
+    line-height: 1;
+    color: var(--muted);
+}
+
+.split-head:not(.has-crumb) .crumb {
+    display: none;
+}
+
+.split-head.has-crumb {
+    top: 58px;
+}
+
+.split-head h1 {
+    margin-top: 12px;
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    color: var(--fg);
+}
+
+.split-head .head-note {
+    margin-top: 12px;
+    font-size: calc(22px * var(--ts));
+    color: var(--muted);
+}
+
+/* Stage: what the focused entry is about, or the live preview of Home on Darstellung. */
+.stage {
+    position: absolute;
+    top: 230px;
+    left: var(--edge);
+    width: 700px;
+    text-align: center;
+}
+
+.stage.with-preview {
+    top: 250px;
+}
+
+.stage-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 260px;
+    height: 260px;
+    margin: 0 auto;
+    border-radius: 64px;
+    color: #fff;
+}
+
+.stage-icon svg {
+    position: relative;     /* above the glow */
+    width: 128px;
+    height: 128px;
+}
+
+.stage-title {
+    margin: 40px 0 0;
+    font-size: calc(44px * var(--ts));
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.stage-title:empty {
+    display: none;
+}
+
+.stage-text {
+    max-width: 600px;
+    margin: 18px auto 0;
+    font-size: calc(28px * var(--ts));
+    line-height: 1.35;
+    color: var(--muted);
+}
+
+.with-preview .stage-text {
+    margin-top: 36px;
+}
+
+/* Grouped list in a port; it scrolls as one layer (settings.js scrollToRow). The padding is room
+   for the focused row's growth and shadow. */
+.gl-port {
+    position: absolute;
+    top: 184px;
+    bottom: 110px;
+    left: 860px;
+    width: 980px;
+    padding: 16px 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.gl-track {
+    position: relative;     /* offsetParent of groups and rows: scrollToRow measures against it */
+    will-change: transform;
+    transition: transform 0.22s ease-out;
+}
+
+.gl-group + .gl-group {
+    margin-top: 34px;
+}
+
+.gl-head {
+    margin: 0 0 12px 28px;
+    font-size: calc(22px * var(--ts));
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(235, 235, 245, 0.42);
+}
+
+.gl-box {
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: var(--rim);
+}
+
+.gl-foot {
+    margin: 12px 28px 0;
+    font-size: calc(22px * var(--ts));
+    line-height: 1.35;
+    color: rgba(235, 235, 245, 0.42);
+}
+
+.gl-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: calc(82px * var(--ts));
+    padding: 0 28px;
+    box-sizing: border-box;
+    border-radius: 22px;
+    font-size: calc(31px * var(--ts));
+    font-weight: 500;
+    transition: transform 0.12s ease-out;
+}
+
+/* Hairlines between rows, from the text on (as on iOS); none around the focused row. */
+.gl-row + .gl-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 90px;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.gl-row.noicon + .gl-row::before,
+.gl-row + .gl-row.noicon::before { left: 28px; }
+.gl-row + .gl-row.with-mini::before { left: 146px; }
+
+.gl-row.focused::before,
+.gl-row.focused + .gl-row::before {
+    opacity: 0;
+}
+
+.gl-ic {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: 22px;
+    color: var(--muted);
+}
+
+.gl-ic svg {
+    display: block;
+    width: 30px;
+    height: 30px;
+}
+
+.gl-row .mini {
+    margin-right: 22px;
+}
+
+/* The label wins; a long value gives way with an ellipsis. */
+.gl-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gl-value {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 55%;
+    margin-left: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: calc(28px * var(--ts));
+    color: var(--muted);
+}
+
+.gl-value.warn {
+    color: var(--warn-moderate);
+    font-weight: 600;
+}
+
+.gl-row.danger .gl-label {
+    color: #ff6961;
+}
+
+.gl-end,
+.gl-check {
+    flex: none;
+    display: block;
+    width: 30px;
+    height: 30px;
+    margin-left: 16px;
+}
+
+.gl-end svg,
+.gl-check svg {
+    display: block;
+    width: 30px;
+    height: 30px;
+}
+
+.gl-end {
+    color: rgba(235, 235, 245, 0.32);
+}
+
+.gl-check {
+    color: var(--accent);
+}
+
+/* Switch: the green (turquoise in Ordiscale) fill fades in, the knob slides; opacity and transform only. */
+.gl-switch {
+    flex: none;
+    position: relative;
+    width: 84px;
+    height: 48px;
+    margin-left: 20px;
+    border-radius: 24px;
+    background: rgba(120, 120, 128, 0.36);
+}
+
+.gl-switch::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: #30d158;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.gl-switch::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease-out;
+}
+
+.gl-switch.on::before {
+    opacity: 1;
+}
+
+.gl-switch.on::after {
+    transform: translateX(36px);
+}
+
+/* Focus, styles Schlicht and Farbig: the white tvOS row, a little larger, same rounding. */
+.gl-row.focused {
+    z-index: 1;
+    background: var(--fg);
+    color: var(--ink);
+    transform: scale(1.035);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.gl-row.focused .gl-value { color: rgba(28, 28, 30, 0.6); }
+.gl-row.focused .gl-value.warn { color: #9a5b00; }
+.gl-row.focused .gl-end { color: rgba(28, 28, 30, 0.4); }
+.gl-row.focused.danger .gl-label { color: #d70015; }
+.gl-row.focused .gl-switch { background: rgba(120, 120, 128, 0.32); }
+.st-plain .gl-row.focused .gl-ic { color: var(--ink); }
+
+/* Style Ordiscale: line icons; the focused row barely tinted turquoise with a soft turquoise glow
+   behind it (blurred shadows are free), icon turquoise, text stays light. */
+.st-ordiscale .gl-row.focused {
+    background: rgba(10, 166, 180, 0.16);
+    color: var(--fg);
+    box-shadow: inset 0 0 0 1.5px rgba(10, 166, 180, 0.5), 0 0 46px rgba(10, 166, 180, 0.3), 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.st-ordiscale .gl-row.focused .gl-ic,
+.st-ordiscale .gl-check { color: var(--turq); }
+.st-ordiscale .gl-row.focused .gl-value { color: rgba(235, 235, 245, 0.75); }
+.st-ordiscale .gl-row.focused .gl-value.warn { color: var(--warn-moderate); }
+.st-ordiscale .gl-row.focused .gl-end { color: rgba(185, 212, 223, 0.7); }
+.st-ordiscale .gl-row.focused.danger .gl-label { color: #ff8a80; }
+.st-ordiscale .gl-row.focused .gl-switch { background: rgba(120, 120, 128, 0.36); }
+.st-ordiscale .gl-switch::before { background: var(--turq); }
+
+/* Stage icon per style. Ordiscale: the line icon in Nebel-white over a soft turquoise glow. */
+.st-ordiscale .stage-icon { color: #eaf3f6; }
+
+.st-ordiscale .stage-icon::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 150px;
+    margin: -75px 0 0 -75px;
+    border-radius: 50%;
+    background: rgba(10, 166, 180, 0.18);
+    box-shadow: 0 0 110px 46px rgba(10, 166, 180, 0.24);
+}
+
+/* Schlicht: the line icon in a quiet ring. */
+.st-plain .stage-icon {
+    color: rgba(235, 235, 245, 0.85);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.18);
+}
+
+/* Farbig: white icons on coloured plates, as in Apple's settings. */
+.st-color .gl-ic {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    color: #fff;
+}
+
+.st-color .gl-row + .gl-row::before { left: 102px; }
+.st-color .gl-row.noicon + .gl-row::before,
+.st-color .gl-row + .gl-row.noicon::before { left: 28px; }
+.st-color .gl-row + .gl-row.with-mini::before { left: 146px; }
+.st-color .gl-row.focused .gl-ic { color: #fff; }
+
+.st-color .stage-icon {
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.st-color .c-blue { background: #0a84ff; }
+.st-color .c-indigo { background: #5e5ce6; }
+.st-color .c-purple { background: #bf5af2; }
+.st-color .c-pink { background: #ff375f; }
+.st-color .c-orange { background: #ff9f0a; }
+.st-color .c-green { background: #30d158; }
+.st-color .c-teal { background: #30b0c7; }
+.st-color .c-red { background: #ff453a; }
+.st-color .c-gray { background: #8e8e93; }
+
+/* ---------- Pairing with the phone (js/ha-pair.js) ----------
+   Left where the stage is: the QR code black on white with its quiet zone, on a white rounded
+   panel (≥ 360 px, readable from about 3 m). Right: three steps, the code very large, time and
+   state, then the actions as a list group. No flex: nothing needs a Chromium 76 fallback. */
+.pair-left {
+    position: absolute;
+    top: 214px;
+    left: var(--edge);
+    width: 700px;
+    text-align: center;
+}
+
+.pair-qr {
+    display: inline-block;
+    padding: 22px;
+    border-radius: 36px;
+    background: #fff;
+    line-height: 0;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+.pair-qr svg {
+    display: block;
+}
+
+.pair-host {
+    margin-top: 26px;
+    font-size: calc(24px * var(--ts));
+    color: var(--muted);
+}
+
+.pair-icon {
+    padding-top: 40px;
+}
+
+.pair-right {
+    position: absolute;
+    top: 214px;
+    left: 900px;
+    width: 880px;
+}
+
+.pair-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pair-step {
+    position: relative;
+    margin-bottom: calc(26px * var(--ts));
+    padding-left: 78px;
+    font-size: calc(34px * var(--ts));
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+.pair-num {
+    position: absolute;
+    top: calc(22px * var(--ts) - 26px);
+    left: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 52px;
+    text-align: center;
+}
+
+/* The code: two groups of three, every character in a cell of the same width (Barlow is not
+   monospaced), so "7KQ 2MX" reads like a number plate. */
+.pair-code {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 14px 30px 18px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: var(--rim);
+    font-size: calc(104px * var(--ts));
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.pair-ch {
+    display: inline-block;
+    width: 0.64em;
+    text-align: center;
+}
+
+.pair-ch.gap {
+    margin-left: 0.28em;
+}
+
+.pair-status {
+    margin: 0 0 30px 78px;
+    font-size: calc(28px * var(--ts));
+    color: var(--muted);
+}
+
+.pair-status:empty {
+    display: none;
+}
+
+.pair-time {
+    margin-right: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+}
+
+.pair-state.warn {
+    color: var(--warn-moderate);
+}
+
+.pair-msg-title {
+    margin: 30px 0 0;
+    font-size: calc(44px * var(--ts));
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.pair-msg-text {
+    max-width: 840px;
+    margin: 18px 0 0;
+    font-size: calc(28px * var(--ts));
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+.pair-actions {
+    width: 780px;
+    margin-top: 36px;
+}
+
+/* ---------- Live preview of Home (settings.js Preview) ----------
+   Drawn at 1920x1080 with Home's own sizes and scaled once to 700 wide (a static transform). It
+   carries its own --ts and font, so the option in focus shows without being saved. No clipping:
+   the wallpaper layer is rounded itself and everything else stays inside it. */
+.pv {
+    position: relative;
+    width: 700px;
+    height: 394px;
+    margin: 0 auto;
+    border-radius: 28px;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.12);
+    text-align: left;
+}
+
+.pv-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    transform: scale(0.364583);     /* 700 / 1920 */
+    transform-origin: 0 0;
+}
+
+.pv-bg,
+.pv-dim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    border-radius: 77px;            /* 28px after scaling */
+}
+
+.pv-bg {
+    background: var(--bg) url("../img/bg.jpg") center / cover no-repeat;
+}
+
+.pv-dim {
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+}
+
+.pv.pv-night .pv-dim { opacity: 1; }
+
+.pv-clock {
+    position: absolute;
+    top: 46px;
+    right: 232px;
+    text-align: right;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+
+.pv-time {
+    font-size: 108px;
+    font-weight: 300;
+    letter-spacing: -3px;
+    line-height: 1;
+}
+
+.pv-sfx {
+    margin-left: 8px;
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.pv-sfx:empty { display: none; }
+
+.pv-date {
+    margin-top: 6px;
+    font-size: calc(28px * var(--ts));
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.pv.no-date .pv-date { display: none; }
+
+.pv-gear {
+    position: absolute;
+    top: 78px;
+    right: var(--edge);
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: var(--glass);
+    box-shadow: var(--rim);
+    color: var(--fg);
+}
+
+.pv-gear svg {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 44px;
+    height: 44px;
+}
+
+.pv-agenda {
+    position: absolute;
+    top: 52px;
+    left: var(--edge);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 28px;
+    row-gap: 4px;
+    align-items: baseline;
+    max-width: 880px;
+    line-height: 1.3;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+
+.pv-agenda .when {
+    font-size: calc(24px * var(--ts));
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.pv-agenda .what {
+    font-size: calc(30px * var(--ts));
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pv.layout-column .pv-clock {
+    top: 44px;
+    left: var(--edge);
+    right: auto;
+    text-align: left;
+}
+
+.pv.layout-column .pv-time {
+    font-size: 96px;
+    letter-spacing: -2px;
+}
+
+.pv.layout-column .pv-agenda {
+    top: 220px;
+}
+
+.pv-glow {
+    position: absolute;
+    top: 432px;
+    left: var(--edge);
+    width: 300px;
+    height: 180px;
+    border-radius: 32px;
+    background: rgba(10, 166, 180, 0.3);
+    box-shadow: 0 0 72px 24px rgba(10, 166, 180, 0.55);
+    opacity: 0;
+}
+
+.pv.glow .pv-glow { opacity: 1; }
+
+.pv-shelf {
+    position: absolute;
+    top: 400px;
+    left: 88px;
+    display: flex;
+    width: 1680px;
+    padding: 32px;
+    border-radius: 44px;
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: var(--rim);
+}
+
+.pv-more {
+    position: absolute;
+    top: 736px;
+    left: var(--edge);
+}
+
+.pv-h {
+    margin-bottom: 26px;
+    font-size: calc(28px * var(--ts));
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.pv-row {
+    display: flex;
+}
+
+.pv .app {
+    flex: none;
+    width: 300px;
+    margin-right: 45px;
+}
+
+.pv .app:last-child {
+    margin-right: 0;
+}
+
+.pv .app .tile {
+    height: 180px;
+}
+
+.pv .app.pv-focus .tile {
+    transform: scale(1.12);
+    box-shadow: var(--lift), var(--rim-lit);
+}
+
+.pv.glow .app.pv-focus .tile {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 0 0 2px rgba(110, 215, 224, 0.45);
+}
+
+.pv .app.pv-focus .label { color: var(--fg); }
+.pv.names-focused .app.pv-focus .label { visibility: visible; }
+
+/* Spezialansichten (wallpaper grid, app editor, Lab): the settings head, their own bodies. */
+#bg-settings .settings-body,
+#homeapps .ed-col,
+#lab .lab-list,
+#lab .lab-log {
+    top: 230px;
+}
+
+/*
+ * ---------- Flex gap fallback (Chromium 76, GQ55QN90A) ----------
+ * See the end of style.css. Only the containers whose `gap` tvos.css sets or changes are here.
+ */
+.no-flex-gap .clock-sub > * + * { margin-left: 22px; }
+.no-flex-gap .clock-sub .wx > * + * { margin-left: 8px; }
+/* Date hidden (Darstellung): weather and network start flush, as gap would leave them. */
+.no-flex-gap #home.no-date .clock-sub > * + * { margin-left: 0; }

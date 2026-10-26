@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc" version="1.1"><title id="title">Ordiscale Signet</title><desc id="desc">Ordiscale Signet, auf-dunkel. Transparenter Hintergrund.</desc><g><g transform="translate(0 0)"><path d="M215.665 120.330 A88 88 0 1 1 178.474 55.955" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" />
+  <rect x="82" y="154" width="24" height="24" rx="7" fill="#0AA6B4" />
+  <rect x="109.5" y="114.5" width="31" height="31" rx="9" fill="#0AA6B4" />
+  <rect x="138" y="73" width="38" height="38" rx="11" fill="#0AA6B4" />
+</g></g></svg>

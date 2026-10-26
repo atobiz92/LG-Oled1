@@ -1,0 +1,214 @@
+/*
+ * Design-Tokens des Ordiscale Launchers (Arn0 TV, tvOS-Stil).
+ *
+ * Quelle: src/css/style.css (:root, Zeile 87) und src/css/tvos.css (:root, Zeile 10). Namen und Werte
+ * sind die des Projekts; tvos.css liegt über style.css, wo beide dieselbe Variable setzen, steht hier
+ * der WIRKSAME Wert (tvos.css), der überschriebene Wert aus style.css im Kommentar.
+ *
+ * Bühne: fest 1920 x 1080 px. Alle Längen in CSS-Pixeln.
+ * Ausführliche Beschreibung, Maße und Komponenten: DESIGN.md (gleicher Ordner).
+ *
+ * Aufbau dieser Datei
+ *   1. :root          die 18 Variablen des Projekts (gleiche Namen), gruppiert
+ *   2. :root          Hilfsnamen --ds-* (NICHT im Projekt; Werte stehen dort als Literale), nur zur Bequemlichkeit
+ *   3. Kommentar-Tabelle derselben Werte für Plattformen ohne CSS-Variablen (Swift, Kotlin, Figma ...)
+ *
+ * Leistungsregeln, die zu den Tokens gehören (Ziel-TV Chromium 76/85): keine backdrop-filter, keine
+ * Live-Verläufe, nur transform und opacity animieren, kein Flex-gap (Rückfall .no-flex-gap).
+ */
+
+/* ------------------------------------------------------------------ 1. Variablen des Projekts */
+:root {
+    /* --- Grund und Text ------------------------------------------------------------------- */
+    --bg: #090b10;                         /* style.css:88   Grundhintergrund der Bühne */
+    --fg: #f5f5f7;                         /* tvos.css:11    Haupttext UND weiße Fokusfläche (style.css: #f4f5f7) */
+    --muted: rgba(235, 235, 245, 0.62);    /* tvos.css:12    Zweittext, ruhige Symbole (style.css: rgba(244, 245, 247, 0.55)) */
+    --faint: rgba(235, 235, 245, 0.62);    /* tvos.css:13    App-Namen unfokussiert (style.css: rgba(244, 245, 247, 0.5)) */
+    --ink: #1c1c1e;                        /* tvos.css:14    Text auf weißer (fokussierter) Fläche */
+    --ring: #ffffff;                       /* style.css:92   Fokusring (nur noch in überschriebenen style.css-Regeln und Lab) */
+
+    /* --- Schrift und Größe ---------------------------------------------------------------- */
+    /* Im CSS steht "Manrope" zuerst; js/appearance.js apply() setzt --font inline an <html> auf die
+       gewählte Schrift (Standard Barlow) + Rückfälle. Wirksamer Standardwert: */
+    --font: "Barlow", "SamsungOne", "Helvetica Neue", Arial, sans-serif;
+    /* CSS-Grundwert in style.css:93: "Manrope", "SamsungOne", "Helvetica Neue", Arial, sans-serif */
+    --ts: 1;                               /* style.css:95   Textgrößen-Faktor, von js/appearance.js gesetzt: 1 | 1.15 | 1.3 */
+
+    /* --- Layout --------------------------------------------------------------------------- */
+    --edge: 120px;                         /* style.css:94   Seitenrand der Bühne links/rechts */
+
+    /* --- Flächen und Ränder (Glas = flaches Alpha-Weiß + Innenlinie, kein backdrop-filter) --- */
+    --glass: rgba(255, 255, 255, 0.11);    /* tvos.css:16    Glasfläche */
+    --rim: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);        /* tvos.css:17  Rand in Ruhe */
+    --rim-lit: inset 0 2px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.4);     /* tvos.css:18  Rand fokussiert (Plain/Farbig) */
+    --lift: 0 30px 60px rgba(0, 0, 0, 0.55);   /* tvos.css:19  Schatten angehobener (fokussierter) Elemente */
+
+    /* --- Marke Ordiscale: Türkis nur für aktive Zustände ---------------------------------- */
+    --turq: #0aa6b4;                       /* tvos.css:22    fokussierte Zeile (Stil Ordiscale), Leuchten, Schalter an, Halte-Balken */
+    --nebel: #b9d4df;                      /* tvos.css:23    ruhiges Licht auf Dunkel (Markenhandbuch Kap. 7); im CSS definiert, nicht verwendet */
+    --accent: #0a84ff;                     /* tvos.css:15    Systemblau: Haken, gewählte Chips/Thumbs, Bewegen-Modus */
+
+    /* --- Statusfarben --------------------------------------------------------------------- */
+    --warn-moderate: #ffb340;              /* style.css:97   Amber: Warnung "Moderate", Hinweiswerte, "offen" */
+    --warn-severe: #ff453a;                /* style.css:98   Rot: Warnung "Severe/Extreme" */
+    --waste: #0a84ff;                      /* style.css:99   Blau: Müllabfuhr-Zeile */
+
+    /* --- Haken (gezeichnet, nie ein Schriftzeichen), als Maske verwendet ------------------ */
+    --check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");   /* style.css:101 */
+}
+
+/* ------------------------------------------------------------------ 2. Hilfsnamen --ds-* (NICHT im Projekt)
+ * Nur Bequemlichkeitsnamen für Werte, die im Projekt-CSS als Literale stehen. Quelle je Zeile angegeben.
+ * Wer das Original-CSS mitbenutzt, braucht diesen Block nicht.
+ */
+:root {
+    /* Statusfarben (Literale) */
+    --ds-green: #30d158;                   /* tvos.css .dot.on, .gl-switch::before, .ha-status.lv-ok */
+    --ds-amber: #ffb340;                   /* = --warn-moderate; .ha-status.lv-open */
+    --ds-red: #ff453a;                     /* = --warn-severe; .ha-status.lv-alarm, .net.offline */
+    --ds-red-text: #ff6961;                /* .gl-row.danger .gl-label, .k-alarm */
+    --ds-yellow: #ffd60a;                  /* .ed-fav, .ha-tile.on .ha-icon, .k-bell */
+    --ds-gray: #8e8e93;                    /* .ha-dot, .st-color .c-gray */
+    --ds-amber-on-white: #9a5b00;          /* Warnwert auf weißer Fokusfläche (Einstellungen) */
+    --ds-amber-on-white-ha: #b25d00;       /* dasselbe im Sicherheits-Cockpit */
+    --ds-red-on-white: #d70015;            /* gefährliche Zeile fokussiert (Plain/Farbig) */
+    --ds-red-on-turq: #ff8a80;             /* gefährliche Zeile fokussiert (Ordiscale) */
+    --ds-turq-light: #6ed7e0;              /* Türöffner-Symbol; Basis rgba(110,215,224,.45) der Türkis-Ränder */
+    --ds-turq-dark: #087f8a;               /* Türöffner-Symbol fokussiert */
+    --ds-stage-icon-ordiscale: #eaf3f6;    /* Stage-Symbol im Stil Ordiscale */
+    --ds-stale: #f5b94a;                   /* Bildzeit älter als 10 s */
+
+    /* Hinweis- und Zweittext-Stufen */
+    --ds-muted-on-white: rgba(28, 28, 30, 0.6);       /* Zweittext auf weißer Fläche */
+    --ds-head-grey: rgba(235, 235, 245, 0.42);        /* .gl-head, .gl-foot */
+    --ds-end-grey: rgba(235, 235, 245, 0.32);         /* Pfeil rechts in Zeile */
+    --ds-hint-text: #a3a8b3;                          /* Hinweisleiste */
+    --ds-hint-key-text: #e6e8ee;                      /* Hinweis-Taste */
+
+    /* Ebenen */
+    --ds-page-dim: rgba(0, 0, 0, 0.74);               /* .page über dem Wallpaper */
+    --ds-ha-page: rgba(5, 7, 11, 0.92);               /* #ha */
+    --ds-overlay: rgba(0, 0, 0, 0.5);                 /* .overlay */
+    --ds-popup-surface: rgba(44, 44, 48, 0.95);       /* .menu-box, #toast */
+    --ds-panel: #141821;                              /* Regler, Verlauf */
+    --ds-camera-bg: #10141c;                          /* Kamerakachel */
+    --ds-box: rgba(255, 255, 255, 0.07);              /* .gl-box, #apps-section */
+    --ds-agenda-plate: rgba(255, 255, 255, 0.16);     /* .agenda::before */
+    --ds-switch-track: rgba(120, 120, 128, 0.36);     /* .gl-switch */
+    --ds-hairline: rgba(255, 255, 255, 0.09);         /* Trennlinie in Gruppen */
+
+    /* Türkis-Flächen und -Schatten (Stil Ordiscale) */
+    --ds-turq-row: rgba(10, 166, 180, 0.16);          /* fokussierte Zeile */
+    --ds-turq-row-shadow: inset 0 0 0 1.5px rgba(10, 166, 180, 0.5), 0 0 46px rgba(10, 166, 180, 0.3), 0 18px 40px rgba(0, 0, 0, 0.35);
+    --ds-turq-tile-rim: inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 0 0 2px rgba(110, 215, 224, 0.45);
+    --ds-home-glow: 0 0 72px 24px rgba(10, 166, 180, 0.55);   /* + Fläche rgba(10,166,180,.3) */
+    --ds-row-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);          /* fokussierte Zeile Plain/Farbig */
+
+    /* Radien */
+    --ds-r-pill: 999px;
+    --ds-r-stage-icon: 64px;
+    --ds-r-shelf: 44px;       /* Favoritenablage */
+    --ds-r-dialog: 40px;      /* Menü-/Dialogbox */
+    --ds-r-qr: 36px;
+    --ds-r-tile: 32px;        /* Kachel, HA-Kachel, Agenda-Platte */
+    --ds-r-group: 30px;       /* Gruppenkasten, Pair-Code */
+    --ds-r-panel: 28px;       /* Vorschau, Regler/Verlauf, Popup-Kamera */
+    --ds-r-card: 26px;
+    --ds-r-row-alt: 24px;     /* .setting-row, .wk-col, .alert, Schalter */
+    --ds-r-row: 22px;         /* .gl-row, Kamerakachel, Chip Sicherheit */
+    --ds-r-menu-item: 20px;
+    --ds-r-small: 18px;       /* .ed-item, #rename-input */
+    --ds-r-mini: 14px;        /* Mini-Kachel, Farbplatte */
+
+    /* Geometrie */
+    --ds-tile-w: 300px;       /* App-Kachel */
+    --ds-tile-h: 180px;       /* Home-Reihe und -Raster; Alle Apps 170 */
+    --ds-tile-gap-x: 45px;
+    --ds-tile-gap-y: 24px;    /* Home-Raster; Alle Apps 34 */
+    --ds-shelf-top: 400px;    /* padding-top von #home-scroll */
+    --ds-console-w: 536px;
+    --ds-console-h: 160px;
+    --ds-row-h: 82px;         /* .gl-row min-height bei ts 1 */
+    --ds-stage-w: 700px;
+    --ds-list-x: 900px;       /* Gruppenliste links (Port 860 + Padding 40) */
+    --ds-list-w: 900px;
+
+    /* Bewegung */
+    --ds-focus-tile: 1.12;    /* App-Kachel, Zahnrad */
+    --ds-focus-console: 1.05;
+    --ds-focus-row: 1.035;
+    --ds-focus-ha: 1.08;
+    --ds-focus-camera: 1.04;
+    --ds-t-focus: 0.1s ease-out;      /* Kachel, Zahnrad, HA-Kachel */
+    --ds-t-row: 0.12s ease-out;       /* Gruppenzeile */
+    --ds-t-scroll: 0.22s ease-out;    /* Listen, Raster */
+    --ds-t-home-scroll: 0.25s ease-out;
+}
+
+/*
+ * ------------------------------------------------------------------ 3. Kommentar-Tabelle (ohne CSS-Variablen)
+ *
+ * FARBEN
+ *   Name             Wert                              Rolle
+ *   bg               #090b10  rgb(9,11,16)             Grund
+ *   fg               #f5f5f7  rgb(245,245,247)         Text, weiße Fokusfläche
+ *   ink              #1c1c1e  rgb(28,28,30)            Text auf Weiß
+ *   muted/faint      rgba(235,235,245,0.62)            Zweittext, App-Namen
+ *   ring             #ffffff                           Fokusring (veraltet, S-Regeln)
+ *   accent           #0a84ff                           Haken, gewählt, Bewegen
+ *   turq             #0aa6b4  rgb(10,166,180)          Türkis, nur aktiv
+ *   nebel            #b9d4df                           ruhiges Licht (unbenutzt)
+ *   warn-moderate    #ffb340                           Amber
+ *   warn-severe      #ff453a                           Rot
+ *   waste            #0a84ff                           Müll-Blau
+ *   green            #30d158                           Verbindung an, Schalter an, "alles zu"
+ *   yellow           #ffd60a                           Stern, Lampe an, Klingel
+ *   gray             #8e8e93                           unbekannt, .c-gray
+ *   glass            rgba(255,255,255,0.11)            Glasfläche
+ *   box / shelf      rgba(255,255,255,0.07)            Gruppenkasten, Favoritenablage
+ *   agenda plate     rgba(255,255,255,0.16)            Agenda fokussiert
+ *   page dim         rgba(0,0,0,0.74)                  Seiten über dem Foto
+ *   overlay          rgba(0,0,0,0.5)                   Menü/Dialog
+ *   menu / toast     rgba(44,44,48,0.95)               Menübox, Toast
+ *   panel            #141821                           Regler, Verlauf
+ *   cockpit page     rgba(5,7,11,0.92)                 Sicherheit
+ *
+ * SCHATTEN / RÄNDER
+ *   rim      inset 0 1px 0 rgba(255,255,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.08)
+ *   rim-lit  inset 0 2px 0 rgba(255,255,255,0.7), inset 0 0 0 2px rgba(255,255,255,0.4)
+ *   lift     0 30px 60px rgba(0,0,0,0.55)
+ *   row focus (Plain/Farbig)  0 18px 40px rgba(0,0,0,0.45)
+ *   row focus (Ordiscale)     inset 0 0 0 1.5px rgba(10,166,180,0.5), 0 0 46px rgba(10,166,180,0.3), 0 18px 40px rgba(0,0,0,0.35); Fläche rgba(10,166,180,0.16)
+ *   tile focus (Ordiscale)    0 16px 36px rgba(0,0,0,0.35); Rand auf ::after inset 0 2px 0 rgba(255,255,255,0.55), inset 0 0 0 2px rgba(110,215,224,0.45)
+ *   home glow                 Fläche rgba(10,166,180,0.3), Schatten 0 0 72px 24px rgba(10,166,180,0.55)
+ *   dialog box                rim + 0 40px 100px rgba(0,0,0,0.6)
+ *   panel (Regler/Verlauf)    0 0 0 2000px rgba(4,6,10,0.88), 0 30px 80px rgba(0,0,0,0.6)
+ *
+ * RADIEN (px)   999 Pille | 64 Stage-Symbol | 44 Favoritenablage | 40 Dialog | 36 QR | 32 Kachel
+ *               30 Gruppenkasten | 28 Panel/Vorschau | 26 Karte | 24 Zeile alt/Alert/Wochenspalte
+ *               22 Gruppenzeile/Kamera/Chip | 20 Menüpunkt | 18 Editorzeile/Textfeld | 14 Mini
+ *               16 Wochenkopf | 12 Wochen-Feiertag | 10 Kameraname/Live-Marke | 3 Halte-Balken
+ *
+ * RÄNDER / ABSTÄNDE (px)   edge 120 | Home-Kacheln 300 x 180, Abstand 45 / 24 | Favoritenablage Padding 32, Rand -32
+ *               Konsole 536 x 160, Abstand 36 | Gruppenzeile 82 | Gruppenabstand 34 | Zeilenpadding 0 28
+ *
+ * SCHRIFT   Barlow 300/400/500/600/700; Fallback "SamsungOne", "Helvetica Neue", Arial, sans-serif
+ *           ts 1 | 1.15 | 1.3 (Groß, Sehr groß); Uhr 108 (Spalte 96) /300 /-3px nicht skaliert
+ *           Rollen (px bei ts 1 / Gewicht): Datum 28/500 | Termin wann 24/500 | Termin was 30/600 | App-Name 26/600
+ *           Reihenüberschrift 28/600 | Seitentitel 64/700 | Split-Titel 56/700 | Krümel 26/500 | Stage-Titel 44/700
+ *           Stage-Text 28/400 | Gruppenkopf 22/600 uppercase 0.12em | Zeile 31/500 | Zeilenwert 28/500
+ *           Setup-Zeile 34/500 | Menüpunkt 30/400 | Toast 28/500 | Hinweis 22/400 | Chip Sicherheit 26/500
+ *           Statustitel 34/700 | Pair-Code 104/600
+ *
+ * BEWEGUNG  Fokus Kachel/Zahnrad 1.12 (Konsole 1.05) in 0.1s ease-out | Zeile 1.035 in 0.12s | HA-Kachel 1.08
+ *           Kamera 1.04 | Chip 1.04 | Scrollen Listen 0.22s ease-out | Home vertikal 0.25s ease-out
+ *           Leuchten transform 0.22s ease-out, opacity 0.2s | Schalter 0.15s | Halte-Balken 2s linear
+ *           Bewegen-Wackeln scale(1.12) rotate(+-1.6deg) 0.28s ease-in-out alternate
+ *
+ * LAYOUT (Bühne 1920 x 1080)
+ *   Home: Uhr top 46 right 232 | Zahnrad 84x84 top 78 right 120 | Agenda top 52 left 120 | Regale ab y 400
+ *   Einstellungen: Stage x120 y230 w700 | Liste x900 y184-Port w980 (Padding 16/40) | Zeile 82
+ *   Sicherheit: Port x80 y150 w1760 (Padding 28/40) | Kameras 1160 | Seitenspalte 490 | Abstand 30
+ *
+ * Alle Tokens erscheinen in DESIGN.md Kapitel 2 mit Datei:Selektor.
+ */

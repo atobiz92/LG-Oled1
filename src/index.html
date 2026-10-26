@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Ordiscale Launcher</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tvos.css">
+    <!-- webOS 4 (Chromium 53) has no CSS Grid: fallbacks under html.no-grid, see docs/abweichungen.md -->
+    <link rel="stylesheet" href="css/webos.css">
+    <!-- Flex `gap` needs Chrome 84; the target TV's Chromium 76 ignores it. Test once, before the first
+         paint: a column of two empty items with gap: 1px is 1px high only if the gap works. Without it
+         <html> gets `no-flex-gap`, and the margin fallbacks at the end of the stylesheets apply. -->
+    <script>
+        (function () {
+            try {
+                var box = document.createElement('div');
+                box.style.cssText = 'position:absolute;visibility:hidden;display:flex;flex-direction:column;gap:1px';
+                box.appendChild(document.createElement('div'));
+                box.appendChild(document.createElement('div'));
+                document.documentElement.appendChild(box);
+                var works = box.scrollHeight === 1;
+                document.documentElement.removeChild(box);
+                if (!works) document.documentElement.classList.add('no-flex-gap');
+            } catch (e) {
+                // Cannot test: keep the normal layout.
+            }
+        })();
+        // webOS 4.x (Chromium 53) has no CSS Grid either (Chrome 57). Same idea: test once, and without
+        // it <html> gets `no-grid` and the fallbacks in css/webos.css apply. The preview can force both
+        // with WebOSMock.engine53() to check the fallbacks against the reference pictures.
+        (function () {
+            var forced = false;
+            try { forced = !!sessionStorage.getItem('webosmock.engine53'); } catch (e) { /* no storage */ }
+            var root = document.documentElement;
+            if (forced) {
+                root.classList.add('no-flex-gap');
+                // The preview's engine does know `gap`; Chromium 53 ignores it, so drop it here too.
+                document.write('<style>*{gap:0!important;row-gap:0!important;column-gap:0!important}</style>');
+            }
+            var grid = window.CSS && CSS.supports && CSS.supports('display', 'grid');
+            if (forced || !grid) root.classList.add('no-grid');
+        })();
+    </script>
+</head>
+<body>
+    <div id="stage">
+        <div id="bg"></div>
+
+        <section id="home" class="view">
+            <!-- Dims the wallpaper while Home is scrolled (opacity only) -->
+            <div id="home-dim" class="home-dim"></div>
+            <!-- Turquoise glow behind the selected tile, icon style "Ordiscale" (home.js glowTo) -->
+            <div id="home-glow" class="home-glow"></div>
+            <header class="clock">
+                <div id="time"><span id="time-main"></span><span id="time-suffix"></span></div>
+                <!-- Date, weather and network share one line under the time, as a small status corner -->
+                <div class="clock-sub">
+                    <div id="date"></div>
+                    <div class="status-row">
+                        <div id="wx" class="wx hidden"></div>
+                        <div id="net" class="net hidden"></div>
+                    </div>
+                </div>
+            </header>
+            <!-- Top left, where tvOS shows the top shelf's text: the next appointments and the next
+                 holiday (home.js renderAgenda). The focused app's name is under its tile. Focusable
+                 from the favourites with Up; OK opens the week view. -->
+            <aside id="agenda" class="agenda hidden">
+                <!-- Official weather warning and next morning's waste collection, above the rest (js/alerts.js) -->
+                <div id="alerts" class="alerts hidden"></div>
+                <div id="events" class="events"></div>
+                <div id="holiday" class="holiday hidden"></div>
+            </aside>
+            <div id="gear" class="gear">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3.2"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </div>
+            <div id="home-scroll">
+            <div id="shelves">
+            <div id="apps-section" class="shelf">
+                <h2>Apps</h2>
+                <div class="row-viewport"><div id="apps-row" class="row-track"></div></div>
+            </div>
+            <div id="inputs-section" class="shelf">
+                <h2 id="inputs-title">Konsolen</h2>
+                <div class="row-viewport"><div id="inputs-row" class="row-track"></div></div>
+            </div>
+            <div id="grid-section" class="shelf hidden">
+                <h2>Weitere Apps</h2>
+                <div id="home-grid" class="home-grid"></div>
+            </div>
+            </div>
+            </div>
+        </section>
+
+        <!-- Week view (js/week.js): seven days from today, opened with OK on the agenda. -->
+        <section id="week" class="view page hidden">
+            <header class="page-head"><h1>Diese Woche</h1><div id="week-range"></div></header>
+            <div class="week-body">
+                <div id="week-alerts" class="alerts hidden"></div>
+                <div id="week-cols" class="week-cols"></div>
+            </div>
+        </section>
+
+        <!-- Home Assistant "Sicherheit" (js/ha-view.js): cameras, state and "Zuletzt" at the top, doors,
+             motion and door openers below, then the other devices. #ha-shift moves a few pixels every
+             3 minutes (burn-in); #ha-dim dims at night; a camera opens full screen (#ha-full), a doorbell
+             or an opened door opens #ha-pop with that camera live (js/ha-live.js). -->
+        <section id="ha" class="view page hidden">
+            <div id="ha-shift" class="ha-shift">
+                <header class="page-head ha-head">
+                    <div><h1 id="ha-title">Sicherheit</h1><div id="ha-sub" class="ha-sub"></div></div>
+                    <div id="ha-status"></div>
+                </header>
+                <div class="ha-port"><div id="ha-track" class="ha-track"></div></div>
+                <div id="ha-empty" class="ha-empty hidden"></div>
+            </div>
+            <div id="ha-full" class="ha-full hidden">
+                <img class="ha-cam-img" alt="">
+                <div class="ha-cam-none">Kein Bild</div>
+                <div id="ha-full-name" class="ha-full-name"></div>
+                <div class="ha-live-badge"></div>
+            </div>
+            <div id="ha-pop" class="ha-pop hidden">
+                <div id="ha-pop-cam" class="ha-pop-cam">
+                    <img class="ha-cam-img" alt="">
+                    <div class="ha-cam-none">Kein Bild</div>
+                    <div class="ha-live-badge"></div>
+                </div>
+                <div class="ha-pop-foot">
+                    <div class="ha-pop-text"><div id="ha-pop-title" class="ha-pop-title"></div><div id="ha-pop-sub" class="ha-pop-sub"></div></div>
+                    <div id="ha-pop-actions" class="ha-pop-actions"></div>
+                </div>
+            </div>
+            <div id="ha-logall" class="ha-logall hidden">
+                <div class="ha-card-h">Zuletzt · letzte 12 Stunden</div>
+                <div id="ha-logall-list" class="ha-logall-list"></div>
+            </div>
+            <div id="ha-slider" class="ha-slider hidden">
+                <div id="ha-slider-title" class="ha-slider-title"></div>
+                <div class="ha-slider-track"><div id="ha-slider-fill" class="ha-slider-fill"></div></div>
+                <div id="ha-slider-pct" class="ha-slider-pct"></div>
+            </div>
+            <div id="ha-dim" class="ha-dim"></div>
+        </section>
+
+        <section id="all" class="view page hidden">
+            <header class="page-head">
+                <h1>Alle Apps</h1>
+                <div id="all-count"></div>
+            </header>
+            <div class="grid-viewport"><div id="all-grid" class="grid"></div></div>
+        </section>
+
+        <!-- Settings pages (js/settings.js registerPage fills each one): stage on the left, grouped
+             list on the right; "pick" is the shared list for every choice. -->
+        <section id="settings" class="view page hidden"></section>
+        <section id="consoles" class="view page hidden"></section>
+        <section id="appearance" class="view page hidden"></section>
+        <section id="screensaver-settings" class="view page hidden"></section>
+        <section id="calendars" class="view page hidden"></section>
+        <section id="weather" class="view page hidden"></section>
+        <section id="ha-settings" class="view page hidden"></section>
+        <section id="ha-integrations" class="view page hidden"></section>
+        <!-- Pairing with the phone (js/ha-pair.js): QR code left, code and steps right -->
+        <section id="ha-pair" class="view page hidden"></section>
+        <section id="network" class="view page hidden"></section>
+        <section id="sound-settings" class="view page hidden"></section>
+        <section id="advanced" class="view page hidden"></section>
+        <section id="launchtimes" class="view page hidden"></section>
+        <section id="pick" class="view page hidden"></section>
+
+        <!-- First-run assistant (js/setup.js): one question per step, the list scrolls like the calendars. -->
+        <section id="setup" class="view page hidden">
+            <header class="page-head"><h1 id="setup-title"></h1><div id="setup-step"></div></header>
+            <div id="setup-hint" class="setup-hint"></div>
+            <div class="list-port"><ul class="settings-list vtrack"></ul></div>
+        </section>
+
+        <section id="bg-settings" class="view page hidden">
+            <header class="split-head has-crumb"><div class="crumb">Einstellungen</div><h1>Hintergrund</h1></header>
+            <div id="bg-body" class="settings-body">
+                <div class="setting-block">
+                    <h2>Hintergrundbild</h2>
+                    <div id="bg-mode" class="chips"></div>
+                </div>
+                <div id="bg-interval-block" class="setting-block">
+                    <h2>Wechsel alle</h2>
+                    <div id="bg-interval" class="chips"></div>
+                </div>
+                <div id="bg-photos-block" class="setting-block">
+                    <h2>Foto</h2>
+                    <div id="bg-photos" class="thumbs"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="homeapps" class="view page hidden">
+            <header class="split-head has-crumb"><div class="crumb">Einstellungen</div><h1>Apps & Favoriten</h1></header>
+            <div class="ed-col ed-left">
+                <h2 id="ed-home-title"></h2>
+                <div class="vport"><div id="ed-home" class="vtrack"></div></div>
+            </div>
+            <div class="ed-col ed-right">
+                <h2 id="ed-other-title"></h2>
+                <div class="vport"><div id="ed-other" class="vtrack"></div></div>
+            </div>
+        </section>
+
+        <section id="lab" class="view page hidden">
+            <header class="split-head has-crumb">
+                <div class="crumb">Erweitert</div>
+                <h1>Lab</h1>
+                <div class="head-note">Tests for the TV. Results go to the log (and to the Mac if devLogUrl is set).</div>
+            </header>
+            <ul id="lab-list" class="lab-list"></ul>
+            <pre id="lab-log" class="lab-log"></pre>
+        </section>
+
+        <!-- Two photo layers so one can decode and zoom from scratch while the other fades out. -->
+        <section id="screensaver" class="view hidden">
+            <div id="ss-photo-a" class="ss-photo"></div>
+            <div id="ss-photo-b" class="ss-photo"></div>
+            <div class="ss-scrim"></div>
+            <div id="ss-caption" class="ss-caption">
+                <div id="ss-title" class="ss-title"></div>
+            </div>
+            <div id="ss-clock" class="ss-clock pos-0">
+                <div class="ss-clock-row">
+                    <div id="ss-weather" class="ss-weather hidden">
+                        <div class="ss-wx-now">
+                            <span id="ss-wx-icon" class="ss-wx-icon"></span>
+                            <span id="ss-wx-temp" class="ss-wx-temp"></span>
+                        </div>
+                        <div id="ss-wx-detail" class="ss-wx-detail"></div>
+                    </div>
+                    <div class="ss-clock-main">
+                        <div id="ss-time" class="ss-time"></div>
+                        <div id="ss-date" class="ss-date"></div>
+                    </div>
+                </div>
+                <!-- Warning and waste collection, then the next appointments under the clock, so they move with it (screensaver.js renderAgenda) -->
+                <div id="ss-alerts" class="alerts ss-alerts hidden"></div>
+                <div id="ss-agenda" class="ss-agenda hidden"></div>
+            </div>
+            <div id="ss-dark" class="ss-dark"></div>
+        </section>
+
+        <section id="runner-game" class="view hidden">
+            <canvas id="runner-canvas" width="1920" height="1080" aria-label="Runner-Spiel"></canvas>
+        </section>
+
+        <div id="rename" class="view overlay hidden">
+            <div class="menu-box">
+                <div id="rename-title" class="dialog-title">Name</div>
+                <input id="rename-input" type="text" maxlength="28" autocomplete="off" spellcheck="false">
+                <!-- Only these close the dialog (settings.js rename): the keyboard's own Done just ends typing -->
+                <ul id="rename-actions" class="dialog-actions">
+                    <li>Speichern</li>
+                    <li>Abbrechen</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="menu" class="view overlay hidden">
+            <div class="menu-box">
+                <div id="menu-title"></div>
+                <ul id="menu-list"></ul>
+            </div>
+        </div>
+
+        <!-- Per-screen remote hints, filled by UI.show from each view's `hints`. -->
+        <div id="hints" class="hints"></div>
+
+        <div id="toast"></div>
+    </div>
+
+    <!-- webOS: the simulator for the preview (does nothing on the TV, where PalmServiceBridge exists),
+         then the platform layer every module below builds on. -->
+    <script src="js/webos-mock.js"></script>
+    <script src="js/platform-webos.js"></script>
+    <!-- Gitignored per-TV overrides, merged by config.js below. Empty unless you create it. -->
+    <script src="js/config.local.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/brands.js"></script>
+    <script src="js/wallpapers.js"></script>
+    <script src="js/devlog.js"></script>
+    <script src="js/launchtimes.js"></script>
+    <script src="js/prefs.js"></script>
+    <script src="js/apps.js"></script>
+    <script src="js/inputs.js"></script>
+    <script src="js/wallpaper.js"></script>
+    <script src="js/appearance.js"></script>
+    <script src="js/weather.js"></script>
+    <!-- Official weather warnings (DWD geoserver); source credit is shown wherever one appears -->
+    <script src="js/warnings.js"></script>
+    <script src="js/holidays.js"></script>
+    <script src="js/calendar-links.js"></script>
+    <!-- ical.js 1.5.0 (Mozilla, MPL-2.0), local copy in js/vendor: reads the calendar feeds. Not listed
+         here: js/calendar.js adds it only once a calendar is due for fetching (saves its parse time). -->
+    <script src="js/calendar.js"></script>
+    <script src="js/alerts.js"></script>
+    <script src="js/network.js"></script>
+    <!-- Home Assistant over its WebSocket API; connects only while the view "Sicherheit" needs it.
+         ha-auth.js: sign-in with user name and password (HA's /auth endpoints) -->
+    <script src="js/ha-auth.js"></script>
+    <script src="js/homeassistant.js"></script>
+    <script src="js/sound.js"></script>
+    <!-- Lucide icons as inline SVG (generated by scripts/build-icons.mjs) -->
+    <script src="js/icons.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/render-probe.js"></script>
+    <script src="js/platform-probe.js"></script>
+    <script src="js/screensaver.js"></script>
+    <script src="js/week.js"></script>
+    <!-- "Zuletzt" from the logbook, and the live picture (AVPlay / <video> / stills) -->
+    <script src="js/ha-history.js"></script>
+    <script src="js/ha-live.js"></script>
+    <script src="js/ha-view.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/settings.js"></script>
+    <!-- Pairing with the phone; loads js/vendor/qrcode-generator-2.0.4.js (MIT) when first opened -->
+    <script src="js/ha-pair.js"></script>
+    <script src="js/setup.js"></script>
+    <script src="js/runner-game.js"></script>
+    <script src="js/boot.js"></script>
+</body>
+</html>

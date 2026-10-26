@@ -1,0 +1,15 @@
+{
+  "name": "ordiscale-launcher-webos",
+  "version": "0.9.7",
+  "private": true,
+  "description": "Ordiscale Launcher (UI-Kit 0.9.7) für LG webOS 4 (OLED55B8PLA)",
+  "scripts": {
+    "preview": "node scripts/serve.mjs",
+    "package": "node scripts/webos.mjs package",
+    "install-tv": "node scripts/webos.mjs install",
+    "launch-tv": "node scripts/webos.mjs launch",
+    "devlog": "node scripts/devlog-server.mjs",
+    "icon": "node scripts/make-icon.mjs",
+    "fetch-assets": "node scripts/fetch-assets.mjs"
+  }
+}

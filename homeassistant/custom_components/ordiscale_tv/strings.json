@@ -1,0 +1,56 @@
+{
+  "title": "Ordiscale TV",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Ordiscale TV",
+        "description": "Paired TVs get their own access for this user. It must not be an administrator. Recommended: a new user “Ordiscale TV” (local network only, no password login).",
+        "data": {
+          "user_id": "User for the TVs"
+        }
+      }
+    },
+    "error": {
+      "invalid_user": "This user cannot be chosen (administrator, inactive or unknown)."
+    },
+    "abort": {
+      "single_instance_allowed": "Ordiscale TV is already set up.",
+      "user_would_be_admin": "The new user would have become an administrator (Home Assistant has no owner yet). Please finish onboarding first."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ordiscale TV",
+        "description": "Paired TVs: {count}. Selected TVs lose their access immediately.",
+        "data": {
+          "pairing_enabled": "Allow pairing of new TVs",
+          "revoke": "Revoke access for"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "pairing_disabled": {
+      "message": "Pairing is switched off."
+    },
+    "not_found": {
+      "message": "This pairing has expired or is unknown. Please restart it on the TV."
+    },
+    "not_pending": {
+      "message": "This pairing has already been handled."
+    },
+    "denied": {
+      "message": "This pairing is blocked. Please restart it on the TV."
+    },
+    "invalid_code": {
+      "message": "Wrong code. {attempts_left} attempts left."
+    },
+    "invalid_format": {
+      "message": "The code has 6 characters: digits 2–9 and letters without I and O."
+    },
+    "user_unavailable": {
+      "message": "The TV user is missing, deactivated or an administrator. Please check the integration."
+    }
+  }
+}

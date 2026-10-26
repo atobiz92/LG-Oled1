@@ -1,0 +1,2 @@
+# Test harness; pulls in the matching Home Assistant release.
+pytest-homeassistant-custom-component

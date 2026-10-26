@@ -1,0 +1,14 @@
+{
+  "domain": "ordiscale_tv",
+  "name": "Ordiscale TV",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["frontend", "http", "panel_custom", "websocket_api"],
+  "documentation": "https://example.invalid/ordiscale-tv-homeassistant",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://example.invalid/ordiscale-tv-homeassistant/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}

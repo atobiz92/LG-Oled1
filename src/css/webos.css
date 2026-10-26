@@ -1,0 +1,174 @@
+/*
+ * Fallbacks for LG webOS 4.x (OLED55B8PLA, web engine Chromium 53).
+ *
+ * Chromium 53 has no CSS Grid (Chrome 57). index.html tests for it before the first paint and sets
+ * `no-grid` on <html>; only then do the rules below apply. They rebuild each grid of style.css and
+ * tvos.css with the same column widths and gaps, so the picture stays as in the UI kit:
+ *   fixed columns (Home grid, All apps, HA tiles, wallpaper thumbs, week)  → flex rows with margins
+ *   "when | what" lists (agenda on Home, settings preview, screen saver)   → floats; the width of the
+ *     "when" column (grid: auto) is measured by js/platform-webos.js and set as --when-w.
+ * The flex-gap fallbacks of the kit (`no-flex-gap`) apply on the TV as well.
+ *
+ * Nothing here changes the look; every value comes from the rule it replaces (file:selector named).
+ * In the preview, WebOSMock.engine53() forces these fallbacks to compare them with the reference pictures.
+ */
+
+/* ---------- Fixed columns ---------- */
+
+/* tvos.css .home-grid: repeat(5, 300px), column-gap 45, row-gap 24 */
+.no-grid .home-grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 1680px;              /* 5 × 300 + 4 × 45 */
+}
+
+.no-grid .home-grid > * {
+    flex: none;
+    margin-right: 45px;
+    margin-bottom: 24px;
+}
+
+.no-grid .home-grid > :nth-child(5n) {
+    margin-right: 0;
+}
+
+/* The row gap sits between rows only: the last row's margin is taken back. */
+.no-grid .home-grid {
+    margin-bottom: -24px;
+}
+
+/* style.css .grid (All apps): repeat(5, 300px), column-gap 45, row-gap 34 */
+.no-grid .grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    width: 1680px;
+}
+
+.no-grid .grid > * {
+    flex: none;
+    margin-right: 45px;
+    margin-bottom: 34px;
+}
+
+.no-grid .grid > :nth-child(5n) {
+    margin-right: 0;
+}
+
+/* tvos.css .ha-grid: repeat(5, 300px), rows calc(130px + 50px * ts), column-gap 45, row-gap 24.
+   The tiles never span cells, so `row dense` has nothing to fill. */
+.no-grid .ha-grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 1680px;
+    margin-bottom: -24px;
+}
+
+.no-grid .ha-grid > * {
+    flex: none;
+    width: 300px;
+    height: calc(130px + 50px * var(--ts));
+    margin-right: 45px;
+    margin-bottom: 24px;
+}
+
+.no-grid .ha-grid > :nth-child(5n) {
+    margin-right: 0;
+}
+
+/* style.css .thumbs (wallpapers): repeat(9, 168px), column-gap 21, row-gap 18 */
+.no-grid .thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    width: 1680px;              /* 9 × 168 + 8 × 21 */
+    margin-bottom: -18px;
+}
+
+.no-grid .thumbs > * {
+    flex: none;
+    width: 168px;
+    margin-right: 21px;
+    margin-bottom: 18px;
+}
+
+.no-grid .thumbs > :nth-child(9n) {
+    margin-right: 0;
+}
+
+/* tvos.css .week-cols: repeat(7, minmax(0, 1fr)), column-gap 14; columns stretch to the row's height */
+.no-grid .week-cols {
+    display: flex;
+}
+
+.no-grid .week-cols > * {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.no-grid .week-cols > * + * {
+    margin-left: 14px;
+}
+
+/* ---------- "when | what" lists: grid auto minmax(0, 1fr) ---------- */
+
+/* style.css .events (Home agenda) and tvos.css .pv-agenda (its copy in the settings preview):
+   column-gap 28, row-gap 4, baseline-aligned; "when" 24px, "what" 30px. */
+.no-grid .events,
+.no-grid .pv-agenda,
+.no-grid .ss-agenda {
+    display: block;
+}
+
+.no-grid .events::after,
+.no-grid .pv-agenda::after,
+.no-grid .ss-agenda::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+.no-grid .events > .when,
+.no-grid .pv-agenda > .when {
+    float: left;
+    clear: left;
+    width: var(--when-w, auto);
+    margin-right: 28px;
+    /* baseline alignment of the 24px "when" with the 30px "what" (line-height 1.3, Barlow) */
+    padding-top: var(--when-drop, 6px);
+}
+
+.no-grid .events > .what,
+.no-grid .pv-agenda > .what {
+    display: block;
+}
+
+.no-grid .events > .when ~ .when,
+.no-grid .pv-agenda > .when ~ .when {
+    margin-top: 4px;
+}
+
+.no-grid .events > .what ~ .what,
+.no-grid .pv-agenda > .what ~ .what {
+    margin-top: 4px;
+}
+
+/* style.css .ss-agenda (screen saver): column-gap 22, row-gap 8, both columns 28px */
+.no-grid .ss-agenda > .when {
+    float: left;
+    clear: left;
+    width: var(--when-w, auto);
+    margin-right: 22px;
+}
+
+.no-grid .ss-agenda > .what {
+    display: block;
+}
+
+.no-grid .ss-agenda > .when ~ .when,
+.no-grid .ss-agenda > .what ~ .what {
+    margin-top: 8px;
+}
+
+.no-grid .ss-agenda.hidden {
+    display: none;
+}
