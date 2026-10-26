@@ -65,3 +65,6 @@ native-snapshot.json
 # webOS build output
 build/
 *.ipk
+
+# app list read from the TV (scripts/tv-apps.mjs)
+src/js/tv-apps.js

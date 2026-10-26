@@ -46,7 +46,7 @@
         { id: 'com.webos.app.browser', name: 'Webbrowser' }
     ];
 
-    var source = 'unknown';     // 'tv' | 'ssap' | 'known': where the last list came from (DevLog, Lab)
+    var source = 'unknown';     // 'tv' | 'ssap' | 'pc' | 'known': where the last list came from (DevLog, Lab)
 
     function withTimeout(promise, ms, what) {
         return new Promise(function (resolve, reject) {
@@ -73,7 +73,17 @@
         };
     }
 
+    // Last fallback: the list the PC read from this TV at install time (scripts/tv-apps.mjs →
+    // js/tv-apps.js), else the apps LG ships under the ids in KNOWN.
     function known() {
+        var pc = window.TV_APPS && window.TV_APPS.apps;
+        if (pc && pc.length) {
+            source = 'pc';
+            return pc.map(function (a) {
+                return { id: a.id, name: a.name, show: a.show !== false, iconPath: a.icon || '', packageId: a.id, categories: [], version: '', system: !!a.system };
+            });
+        }
+        source = 'known';
         return KNOWN.map(function (a) {
             return { id: a.id, name: a.name, show: true, iconPath: '', packageId: a.id, categories: [], version: '', system: false };
         });
@@ -90,9 +100,10 @@
                 return (res.launchPoints || []).map(fromLaunchPoint);
             });
         }).catch(function (err) {
-            source = 'known';
-            DevLog.log('App list unavailable (' + DevLog.errorText(err) + '): using the known apps');
-            return known();
+            var list = known();
+            DevLog.log('App list unavailable (' + DevLog.errorText(err) + '): using ' +
+                (source === 'pc' ? 'the list read from the PC' : 'the known apps'));
+            return list;
         });
     }
 

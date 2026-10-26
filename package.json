@@ -10,7 +10,8 @@
     "launch-tv": "node scripts/webos.mjs launch",
     "devlog": "node scripts/devlog-server.mjs",
     "icon": "node scripts/make-icon.mjs",
-    "fetch-assets": "node scripts/fetch-assets.mjs"
+    "fetch-assets": "node scripts/fetch-assets.mjs",
+    "apps": "node scripts/tv-apps.mjs"
   },
   "engines": {
     "node": ">=20.11"

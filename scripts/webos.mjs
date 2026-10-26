@@ -1,7 +1,7 @@
 // Builds and installs the launcher on an LG webOS TV with the webOS CLI (ares-*).
 //
 //   node scripts/webos.mjs package   src/ → build/com.tobias.launcher_<version>_all.ipk
-//   node scripts/webos.mjs install   build it and install it on the TV
+//   node scripts/webos.mjs install   read the TV's apps (tv-apps.mjs), build, install on the TV
 //   node scripts/webos.mjs launch    start it on the TV
 //
 // The TV is the ares device named "tv" (ares-setup-device), or the one in TV_DEVICE.
@@ -41,6 +41,9 @@ function pack() {
     // index.html always loads config.local.js; it is gitignored, so a fresh clone has none.
     const local = join(src, 'js', 'config.local.js');
     if (!existsSync(local)) writeFileSync(local, '/* No local overrides. See config.local.example.js. */\n');
+    // Same for the app list read from the TV (scripts/tv-apps.mjs).
+    const tvApps = join(src, 'js', 'tv-apps.js');
+    if (!existsSync(tvApps)) writeFileSync(tvApps, '/* No list read from the TV yet (scripts/tv-apps.mjs). */\nwindow.TV_APPS = null;\n');
     run('node', [quote(join(root, 'scripts', 'build-marks.mjs'))]);
 
     rmSync(stage, { recursive: true, force: true });
@@ -60,6 +63,9 @@ function pack() {
 
 // Always from a fresh build, so an old .ipk of the same version never ends up on the TV.
 function install() {
+    // Read the TV's apps first, so the launcher has them even if the TV refuses it the list.
+    // A failure here (LG Connect Apps off, prompt declined) does not stop the install.
+    spawnSync(quote(process.execPath) + ' ' + quote(join(root, 'scripts', 'tv-apps.mjs')), { stdio: 'inherit', shell: true });
     pack();
     run('ares-install', ['--device', quote(device), quote(ipk)]);
 }
