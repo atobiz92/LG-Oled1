@@ -4,9 +4,9 @@
  * Switching: every input is an app of its own on webOS (com.webos.app.hdmi1 … hdmi4, live TV
  * com.webos.app.livetv); launching it switches the TV, so there is no separate "set source" step and
  * no picture inside the launcher ('inapp' falls back to 'external').
- * Status: luna://com.webos.service.eim/getAllInputStatus reports which ports have a signal. A
- * developer-mode app may not be allowed to ask; then every port of the B8 counts as present but
- * unplugged, and Home shows the ports named in Settings → Konsolen & HDMI (am TV prüfen).
+ * Status: luna://com.webos.service.eim/getAllInputStatus reports which ports have a signal; refused to
+ * a developer-mode app, the same comes from LG Connect Apps (js/ssap.js, tv/getExternalInputList).
+ * Without either, every port of the B8 counts as present but unplugged.
  */
 (function () {
     'use strict';
@@ -27,18 +27,27 @@
     }
 
     // { connected: [{ type, number }], disconnected: [...] }, as the Tizen version returns it.
+    function toSources(devices) {
+        var info = { connected: [{ type: 'TV', number: 1 }], disconnected: [] };
+        (devices || []).forEach(function (d) {
+            var m = /hdmi\D*(\d+)/i.exec(d.id || d.appId || '');
+            if (!m) return;
+            var s = { type: 'HDMI', number: Number(m[1]) };
+            (d.connected || d.activate ? info.connected : info.disconnected).push(s);
+        });
+        return info;
+    }
+
     function sources() {
         return call(Platform.call(EIM + 'getAllInputStatus', {}, 6000), 'Eingangsliste').then(function (res) {
-            var info = { connected: [{ type: 'TV', number: 1 }], disconnected: [] };
-            (res.devices || []).forEach(function (d) {
-                var m = /hdmi\D*(\d+)/i.exec(d.id || d.appId || '');
-                if (!m) return;
-                var s = { type: 'HDMI', number: Number(m[1]) };
-                (d.connected || d.activate ? info.connected : info.disconnected).push(s);
-            });
-            return info;
+            return toSources(res.devices);
         }).catch(function (err) {
-            DevLog.log('Input status refused (' + DevLog.errorText(err) + '): assuming HDMI 1-4, none plugged in');
+            DevLog.log('Input status over Luna refused (' + DevLog.errorText(err) + '): asking LG Connect Apps');
+            return Ssap.request('ssap://tv/getExternalInputList', {}, 6000).then(function (res) {
+                return toSources(res.devices);
+            });
+        }).catch(function (err) {
+            DevLog.log('Input status unavailable (' + DevLog.errorText(err) + '): assuming HDMI 1-4, none plugged in');
             return {
                 connected: [{ type: 'TV', number: 1 }],
                 disconnected: PORTS.map(function (n) { return { type: 'HDMI', number: n }; })

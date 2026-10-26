@@ -2,10 +2,10 @@
  * App listing, filtering and launching on LG webOS (luna://com.webos.applicationManager).
  * Same interface as the Tizen version of the UI kit, so home.js, settings.js and setup.js stay as they are.
  *
- * Listing: listLaunchPoints, the list behind LG's own app bar (id, title, icon). Whether a developer-mode
- * app may call it is not documented; if the TV refuses, the launcher falls back to the apps it knows
- * from config.js (KNOWN below) and launching shows a message for the ones that are not installed.
- * Am TV prüfen: which of the two paths the B8 takes (DevLog "App list").
+ * Listing: listLaunchPoints, the list behind LG's own app bar (id, title, icon). webOS refuses it to
+ * apps that are not LG's or a partner's (LG developer forum: "Denied method call"), so the same list is then read
+ * through LG Connect Apps (js/ssap.js; the TV asks once). Only if that is off or declined do the apps
+ * LG ships under these ids stand in (KNOWN below). Starting goes the same two ways.
  */
 (function () {
     'use strict';
@@ -46,7 +46,7 @@
         { id: 'com.webos.app.browser', name: 'Webbrowser' }
     ];
 
-    var source = 'unknown';     // 'tv' | 'known': where the last list came from (DevLog, Lab)
+    var source = 'unknown';     // 'tv' | 'ssap' | 'known': where the last list came from (DevLog, Lab)
 
     function withTimeout(promise, ms, what) {
         return new Promise(function (resolve, reject) {
@@ -73,22 +73,37 @@
         };
     }
 
+    function known() {
+        return KNOWN.map(function (a) {
+            return { id: a.id, name: a.name, show: true, iconPath: '', packageId: a.id, categories: [], version: '', system: false };
+        });
+    }
+
     function getInstalledApps() {
         return Platform.call(AM + 'listLaunchPoints', {}, 8000).then(function (res) {
             source = 'tv';
             return (res.launchPoints || []).map(fromLaunchPoint);
         }).catch(function (err) {
-            source = 'known';
-            DevLog.log('App list from the TV refused (' + DevLog.errorText(err) + '): using the known apps');
-            return KNOWN.map(function (a) {
-                return { id: a.id, name: a.name, show: true, iconPath: '', packageId: a.id, categories: [], version: '', system: false };
+            DevLog.log('App list over Luna refused (' + DevLog.errorText(err) + '): asking LG Connect Apps');
+            return Ssap.request('ssap://com.webos.applicationManager/listLaunchPoints').then(function (res) {
+                source = 'ssap';
+                return (res.launchPoints || []).map(fromLaunchPoint);
             });
+        }).catch(function (err) {
+            source = 'known';
+            DevLog.log('App list unavailable (' + DevLog.errorText(err) + '): using the known apps');
+            return known();
         });
     }
 
     function launch(appId) {
         var id = ALIAS[appId] || appId;
-        return withTimeout(Platform.call(AM + 'launch', { id: id }, 8000), 8000, 'Start');
+        var luna = withTimeout(Platform.call(AM + 'launch', { id: id }, 8000), 8000, 'Start');
+        return luna.catch(function (err) {
+            // Refused over Luna: start it the way LG's phone app does. Other errors (not installed) stand.
+            if (!/denied/i.test(err.message)) throw err;
+            return Ssap.request('ssap://system.launcher/launch', { id: id });
+        });
     }
 
     function isConsumer(app) {

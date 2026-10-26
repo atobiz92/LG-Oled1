@@ -24,8 +24,9 @@ const SKIP = [/^img\/marks(\/|$)/, /^img\/icons\/.*\.svg$/, /^img\/easter-egg\/.
     /(^|\/)\./, /(^|\/)Thumbs\.db$/];
 
 function run(cmd, args) {
-    // shell: true so that Windows finds ares-*.cmd and npm-installed tools.
-    const r = spawnSync(cmd, args, { stdio: 'inherit', shell: true });
+    // Through the shell so that Windows finds ares-*.cmd; one command string (paths are quoted below),
+    // since Node 24 warns about separate arguments with shell: true (DEP0190).
+    const r = spawnSync([cmd].concat(args).join(' '), { stdio: 'inherit', shell: true });
     if (r.status !== 0) process.exit(r.status || 1);
 }
 

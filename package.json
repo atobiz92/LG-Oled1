@@ -1,6 +1,6 @@
 {
   "name": "ordiscale-launcher-webos",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "private": true,
   "description": "Ordiscale Launcher (UI-Kit 0.9.7) für LG webOS 4 (OLED55B8PLA)",
   "scripts": {

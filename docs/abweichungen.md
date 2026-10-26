@@ -35,7 +35,8 @@ Am TV selbst steht der Vergleich noch aus (Fotos derselben Ansichten).
 | Datei | Kit (Tizen) | Port (webOS) |
 |---|---|---|
 | `src/js/platform-webos.js` | – | Luna-Aufrufe über `PalmServiceBridge`, App-ID, Tastencodes, `padStart`-Ersatz (fehlt bis Chrome 57), Listen-Anpassung für `no-grid` |
-| `src/js/apps.js` | `tizen.application` | `com.webos.applicationManager/listLaunchPoints` und `/launch`. Verweigert der TV die Liste, gilt eine Liste bekannter LG-App-IDs (am TV prüfen). Samsung-IDs aus gespeicherten Einstellungen werden auf LG umgelenkt (`com.samsung.tv.csfs` → `com.webos.app.home`, `org.tizen.tv-viewer` → `com.webos.app.livetv`) |
+| `src/js/apps.js` | `tizen.application` | `com.webos.applicationManager/listLaunchPoints` und `/launch`, verweigert der TV das, dann dieselben Aufrufe über LG Connect Apps (`ssap.js`). Erst wenn beides fehlt, gilt eine Liste bekannter LG-App-IDs. Samsung-IDs aus gespeicherten Einstellungen werden auf LG umgelenkt (`com.samsung.tv.csfs` → `com.webos.app.home`, `org.tizen.tv-viewer` → `com.webos.app.livetv`) |
+| `src/js/ssap.js` (ab 0.9.8) | – | Zweiter Weg über LG Connect Apps (`ws://127.0.0.1:3000`, SSAP), wenn der TV Luna-Aufrufe verweigert. Der TV fragt einmal nach, und der Schlüssel bleibt im localStorage des TVs. Angefragte Rechte: installierte Apps lesen, Apps starten, Eingangsliste lesen |
 | `src/js/inputs.js` | `tizen.tvwindow`/`tvinputdevice` | Jeder Eingang ist bei webOS eine App (`com.webos.app.hdmi1` … `hdmi4`, `com.webos.app.livetv`). Status über `com.webos.service.eim/getAllInputStatus`; wird das verweigert, gelten HDMI 1–4 als vorhanden, aber leer |
 | `src/js/network.js` | `webapis.network` | `com.palm.connectionmanager/getStatus` mit Abo. Anzeige und Texte wie im Kit |
 | `src/js/ui.js` | Zurück = 10009 | Zurück = 461 (vom Plattformmodul) |
@@ -65,6 +66,6 @@ Entfernt, weil nur für Samsung: `native/`, `src/config.xml`, `scripts/install-t
 
 ## 6. Noch am TV zu prüfen
 
-- Ob `listLaunchPoints`, `launch` und `getAllInputStatus` für eine Entwickler-App freigegeben sind. Wenn nicht, greifen die Rückfälle oben, und die App-IDs der Liste müssen am TV bestätigt werden.
+- 0.9.7 zeigte auf dem TV zu wenige Apps, vermutlich weil LG die App-Liste über Luna verweigert. Ab 0.9.8 prüfen, ob die Abfrage über LG Connect Apps alle installierten Apps liefert (Protokoll: „App list“, „SSAP“).
 - Tastencodes (Zurück 461, Farbtasten, Halten von OK und Zurück).
 - Fotos der 16 Ansichten am TV und Vergleich mit den Referenzbildern.

@@ -19,12 +19,12 @@ Stand: 26.10.2026
 
 - Der Launcher läuft als normale Web-App im Developer Mode. Er ersetzt nicht LGs Startseite und startet nicht beim Einschalten (beides ginge nur mit Root, das ist ausgeschlossen).
 - Die Developer-Mode-Sitzung läuft nach einer begrenzten Zeit ab (laut Developer-Mode-App derzeit rund 50 Stunden) und muss in der App verlängert werden. Läuft sie ab, entfernt der TV die installierten Entwickler-Apps. Den Verlängerungs-Schlüssel (Token) nie in Git oder in den Chat schreiben.
-- Andere Apps starten, Eingänge umschalten und den Netzwerkstatus lesen geht über Luna-Dienste. Ob der TV der Entwickler-App alles davon erlaubt, zeigt sich erst beim ersten Start (siehe `abweichungen.md`, Abschnitt 6).
+- Andere Apps starten, Eingänge umschalten und den Netzwerkstatus lesen geht über Luna-Dienste. Die Liste der installierten Apps gibt LG über Luna nur eigenen und Partner-Apps heraus. Deshalb liest der Launcher sie ab 0.9.8 über **LG Connect Apps** (dieselbe Schnittstelle wie LGs Handy-App). Dafür muss am TV *Einstellungen → Verbindung → LG Connect Apps* an sein. Beim ersten Start fragt der TV einmal, ob „Ordiscale Launcher“ sich verbinden darf. Bei „Ja“ erscheinen alle installierten Apps. Bei „Nein“ fragt der Launcher 24 Stunden lang nicht erneut und zeigt so lange nur die bekannten Standard-Apps.
 
 ## Bauen und installieren (auf dem Windows-Rechner)
 
 ```
-npm.cmd run package      # baut build\com.tobias.launcher_0.9.7_all.ipk
+npm.cmd run package      # baut build\com.tobias.launcher_<Version>_all.ipk
 npm.cmd run install-tv   # baut neu und installiert auf dem Gerät "tv"
 npm.cmd run launch-tv    # startet den Launcher
 ```

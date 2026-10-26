@@ -11,6 +11,8 @@
  *   WebOSMock.calls                  every Luna call so far (uri, params)
  *   WebOSMock.denyAppList = true     the TV refuses listLaunchPoints (launcher falls back to known apps)
  *   WebOSMock.denyInputs = true      the TV refuses the input status
+ *   WebOSMock.denyLaunch = true      the TV refuses launch over Luna (the launcher starts via LG Connect Apps)
+ *   WebOSMock.ssap = 'allow'         LG Connect Apps: 'allow' (prompt answered with Yes), 'decline', 'off'
  *   WebOSMock.network = 'ethernet'   'wifi' (default) | 'ethernet' | 'offline'
  *   WebOSMock.engine53()             reload with the fallbacks of the TV's Chromium 53 forced on
  *
@@ -67,6 +69,8 @@
         calls: [],
         denyAppList: false,
         denyInputs: false,
+        denyLaunch: false,
+        ssap: 'allow',
         network: 'wifi',
         // Reload with no-grid and no-flex-gap forced, as on the TV (index.html reads the flag).
         engine53: function (on) {
@@ -93,6 +97,7 @@
             return { returnValue: true, launchPoints: launchPoints.slice() };
         },
         'luna://com.webos.applicationManager/launch': function (p) {
+            if (WebOSMock.denyLaunch) return { returnValue: false, errorCode: -1, errorText: 'Denied method call "launch"' };
             console.log('[webos-mock] launch', p.id);
             // As in the kit's simulator, one app fails to start, to show the message.
             if (p.id === 'spotify-beehive') return { returnValue: false, errorCode: -101, errorText: 'Simulierter Startfehler' };
@@ -130,6 +135,40 @@
         this.cancelled = true;
     };
     window.PalmServiceBridge = Bridge;
+
+    // LG Connect Apps (js/ssap.js) on ws://127.0.0.1:3000; other sockets stay real.
+    var NativeWebSocket = window.WebSocket;
+    function FakeSsap(url) {
+        if (url.indexOf('ws://127.0.0.1:3000') !== 0) return new NativeWebSocket(url);
+        var self = this;
+        setTimeout(function () {
+            if (WebOSMock.ssap === 'off') { if (self.onerror) self.onerror({}); return; }
+            if (self.onopen) self.onopen({});
+        }, 30);
+    }
+    FakeSsap.prototype.send = function (raw) {
+        var self = this;
+        var msg = JSON.parse(raw);
+        var reply = function (o) { setTimeout(function () { if (self.onmessage) self.onmessage({ data: JSON.stringify(o) }); }, 80); };
+        if (window.parent && window.parent !== window) {
+            try { window.parent.postMessage({ type: 'webos-luna', uri: msg.uri || 'ssap register', params: msg.uri ? msg.payload : {} }, '*'); } catch (e) { /* ignore */ }
+        }
+        if (msg.type === 'register') {
+            if (WebOSMock.ssap === 'decline') { reply({ type: 'error', id: msg.id, error: '403 User rejected pairing' }); return; }
+            reply({ type: 'response', id: msg.id, payload: { pairingType: 'PROMPT', returnValue: true } });
+            reply({ type: 'registered', id: msg.id, payload: { 'client-key': 'mock-key' } });
+            return;
+        }
+        var uri = msg.uri;
+        var res;
+        if (uri === 'ssap://com.webos.applicationManager/listLaunchPoints') res = { returnValue: true, launchPoints: launchPoints.slice() };
+        else if (uri === 'ssap://system.launcher/launch') res = { returnValue: true, id: msg.payload.id };
+        else if (uri === 'ssap://tv/getExternalInputList') res = { returnValue: true, devices: inputs.slice() };
+        else res = { returnValue: false, errorText: 'Unknown method' };
+        reply({ type: 'response', id: msg.id, payload: res });
+    };
+    FakeSsap.prototype.close = function () {};
+    window.WebSocket = FakeSsap;
 
     // Re-send subscribed answers, e.g. after WebOSMock.network changed: WebOSMock.notify().
     WebOSMock.notify = function () {
