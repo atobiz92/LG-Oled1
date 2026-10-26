@@ -13,6 +13,7 @@
  *   WebOSMock.denyInputs = true      the TV refuses the input status
  *   WebOSMock.denyLaunch = true      the TV refuses launch over Luna (the launcher starts via LG Connect Apps)
  *   WebOSMock.ssap = 'allow'         LG Connect Apps: 'allow' (prompt answered with Yes), 'decline', 'off'
+ *   WebOSMock.asLg('allow')          reload with Luna refused and LG Connect Apps as given (asLg('') undoes)
  *   WebOSMock.network = 'ethernet'   'wifi' (default) | 'ethernet' | 'offline'
  *   WebOSMock.engine53()             reload with the fallbacks of the TV's Chromium 53 forced on
  *
@@ -76,8 +77,24 @@
         engine53: function (on) {
             try { sessionStorage.setItem('webosmock.engine53', on === false ? '' : '1'); } catch (e) { /* ignore */ }
             location.reload();
+        },
+        // Reload as a TV that refuses Luna to this app, with LG Connect Apps answering 'allow' |
+        // 'decline' | 'off' (the TV's prompt is not simulated); '' = Luna allowed again.
+        asLg: function (ssap) {
+            try {
+                sessionStorage.setItem('webosmock.ssap', ssap || '');
+                localStorage.removeItem('arn0.ssap.v1');
+            } catch (e) { /* ignore */ }
+            location.reload();
         }
     };
+    try {
+        var asLg = sessionStorage.getItem('webosmock.ssap');
+        if (asLg) {
+            WebOSMock.denyAppList = WebOSMock.denyInputs = WebOSMock.denyLaunch = true;
+            WebOSMock.ssap = asLg;
+        }
+    } catch (e) { /* no storage */ }
 
     var subscribers = [];
 
